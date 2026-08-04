@@ -405,6 +405,7 @@ function intro(){
     })()}
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="showPath()">🗺️ המסלול שלי ל-134</button>
+      <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="startWordSent(false)">📄 משפטים על המילים שלי</button>
       <button class="btn ghost" onclick="startSCP()">✏️ השלמת משפטים — שאלות אמיתיות</button>
       <button class="btn ghost" onclick="startRSP()">🎯 ניסוח מחדש — שאלות אמיתיות</button>
       <button class="btn ghost" onclick="showTips()">🧠 שיטות וטיפים למבחן</button>
@@ -1270,13 +1271,22 @@ function renderSessQuiz(item){
   const firstT=x=>x.split(/[;,]/)[0].trim();
   const cand=WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&Math.abs(x.lv-w.lv)<=1);
   const pool=shuffle(cand).slice(0,3);
-  const opts=reverse?[w.w,...pool.map(x=>x.w)]:[w.t,...pool.map(x=>x.t)];
+  let opts=reverse?[w.w,...pool.map(x=>x.w)]:[w.t,...pool.map(x=>x.t)];
   sess.order=shuffle([0,1,2,3]);
-  const stem=reverse
+  let stem=reverse
     ?'<div style="font-size:1.5rem;text-align:center;font-weight:700;margin:18px 0">'+w.t+'</div>'+
      '<p class="sub" style="text-align:center">🔁 מילה עקשנית — הפעם הפוך: איזו מילה באנגלית?</p>'
     :'<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>';
-  const optStyle=reverse?'direction:ltr;text-align:left;font-family:Georgia,serif':'direction:rtl;text-align:right;font-family:inherit';
+  let optStyle=reverse?'direction:ltr;text-align:left;font-family:Georgia,serif':'direction:rtl;text-align:right;font-family:inherit';
+  /* 4.8 — צורה שלישית לאותה מילה: בחזרות, חלק מהפעמים המילה מגיעה **בתוך משפט**
+     ולא כתרגום. תרגום = זיהוי; משפט = שימוש. המבחן בודק את השני. לא על מילה חדשה
+     (עוד לא נלמדה) ולא על מילה עקשנית (שם ההיפוך חשוב יותר). */
+  const sv=(!item.isNew&&!reverse&&Math.random()<0.45)?sentFor(w):null;
+  if(sv){
+    opts=sv.opts;
+    stem=sentStem(sv,'📄 הפעם בתוך משפט — איזו מילה משלימה אותו?');
+    optStyle='direction:ltr;text-align:left;font-family:Georgia,serif';
+  }
   app.innerHTML='<div class="card">'+
     '<p class="sub">'+(item.isNew?'מילה חדשה':'חזרה')+' · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
     stem+
@@ -1294,7 +1304,7 @@ function sessAnswer(vi,oi){
   if(right){
     sess.correct++;s.log[today].c++;
     const c=s.cards[w.w]||{b:0,laps:0};
-    if(item.isNew){c.b=1;s.log[today].n++;}
+    if(item.isNew){c.b=1;c.seen=today;s.log[today].n++;} // seen = יום הלמידה, בשביל "משפטים על המילים של היום"
     else{c.b=Math.min(6,c.b+1);s.log[today].r++;}
     const d=new Date();d.setDate(d.getDate()+INTERVALS[c.b]);
     c.due=dayKey(d);
@@ -1343,6 +1353,14 @@ function sessDone(){
     '<div class="stat"><div class="k">🔥 רצף</div><div class="v">'+st.streak+' ימים</div></div>'+
     '</div>'+
     '<p class="sub">המילים שטעית בהן יחזרו מחר. אלה שידעת — בעוד יומיים-ארבעה. ככה הן נכנסות לזיכרון לטווח ארוך.</p>'+
+    /* 4.8 — ההמשך הטבעי של הסשן: אותן מילים, הפעם בתוך משפטים. לפני השאלות
+       הרשמיות של נית"ב, שהן קשות ועל מילים אחרות לגמרי. */
+    (sess.newCount
+      ?'<div class="card" style="text-align:right;border:1.5px solid var(--accent)"><b>📄 ההמשך של הסשן:</b> '+
+       sess.newCount+' המילים שלמדת עכשיו — הפעם בתוך משפטים, כמו במבחן.'+
+       '<div class="actions"><button class="btn" onclick="startWordSent(true)">▶ יאללה, משפטים על המילים שלי</button></div></div>'
+      :'<div class="card" style="text-align:right;border:1.5px solid var(--accent)"><b>📄 ההמשך של הסשן:</b> המילים שלך בתוך משפטים — לזהות בהקשר, לא רק לתרגם.'+
+       '<div class="actions"><button class="btn" onclick="startWordSent(false)">▶ משפטים על המילים שלי</button></div></div>')+
     (new Date().getDate()%2===0
       ?'<div class="card" style="text-align:right"><b>🏋️ עוד 5 דקות להיום:</b> השלמת משפטים — שאלות אמיתיות מהמבחן<div class="actions"><button class="btn" onclick="startSCP()">✏️ יאללה, 11 שאלות</button></div></div>'
       :'<div class="card" style="text-align:right"><b>🏋️ עוד 5 דקות להיום:</b> ניסוח מחדש — שאלות אמיתיות מהמבחן<div class="actions"><button class="btn" onclick="startRSP()">🎯 יאללה, 8 שאלות</button></div></div>')+
@@ -1631,6 +1649,162 @@ const SCP=[ // c=0 תמיד
   why:"adapt to surroundings = מסתגלים לסביבה. שינוי צבע = הסתגלות."}
 ];
 const scp={i:0,correct:0,order:[]};
+/* ============ משפטים על המילים שלי (4.8) ============
+   הבקשה של המשתמש: "למה לא לעשות משפטים שקשורים לאותן מילים ולשלב עם ההמשך".
+   🔑 הנימוק: מילה שיודעים לתרגם ≠ מילה שמזהים בתוך משפט. במבחן אף פעם לא שואלים
+   "מה זה abundant" — נותנים משפט שבו זו התשובה היחידה שמתאימה להקשר.
+   ⚠️ המסיחים כאן הם מילים מהרשימה של המשתמש עצמו, ולא מילים אקראיות — ככה כל שאלה
+   מתרגלת 4 מילים ולא אחת, ומאמנת בדיוק את ההבחנה שהמבחן בודק.
+   סדר הכתיבה = סדר הלמידה (pri יורד): קודם 31 מילות הקישור, אחר-כך אוצר המילים. */
+const SENT={
+ // — מילות קישור: ניגוד —
+ 'although':{s:"The team delivered the project on time, ___ two of its members were ill for most of the month.",d:["because","therefore","so that"]},
+ 'even though':{s:"She insisted on driving home ___ she was clearly exhausted.",d:["as soon as","so that","in case"]},
+ 'though':{s:"The film was slow and far too long; it was, ___, beautifully photographed.",d:["therefore","instead","besides"]},
+ 'despite':{s:"___ the heavy rain, the ceremony took place outdoors exactly as planned.",d:["Although","Because of","Unless"]},
+ 'in spite of':{s:"The company kept its prices unchanged ___ the sharp rise in the cost of materials.",d:["owing to","due to","thanks to"]},
+ 'while':{s:"Sales rose sharply in the northern branches, ___ in the south they remained flat.",d:["therefore","since","so that"]},
+ 'yet':{s:"The evidence was clear to everyone in the room, ___ the committee refused to act on it.",d:["thus","so","because"]},
+ 'however':{s:"The plan looked promising on paper. In practice, ___, it proved far too expensive.",d:["therefore","moreover","similarly"]},
+ 'unless':{s:"The flight will leave on schedule ___ the weather deteriorates during the night.",d:["even if","because","whereas"]},
+ 'since':{s:"___ the new traffic law took effect, accidents at that junction have dropped by half.",d:["Although","Unless","Whereas"]},
+ 'due to':{s:"The delay in publication was ___ a shortage of qualified reviewers.",d:["although","whereas","in spite of"]},
+ 'therefore':{s:"The results could not be repeated in any other laboratory and were ___ left out of the final report.",d:["nevertheless","although","whereas"]},
+ 'as a result':{s:"Rainfall dropped by a third that winter; ___, the harvest was the smallest in a decade.",d:["nevertheless","in contrast","for example"]},
+ 'in addition':{s:"The device is cheap to produce. ___, it requires almost no maintenance.",d:["Nevertheless","In contrast","Otherwise"]},
+ 'whether... or':{s:"___ the project succeeds ___ fails, the research team has promised to publish its findings.",d:["Even if","Unless","Provided that"]},
+ 'so... that':{s:"The assembly instructions were ___ confusing ___ most customers gave up halfway.",d:["too... to","such... as","as... as"]},
+ 'both... and':{s:"The proposal was rejected by ___ the management ___ the workers.",d:["either... or","neither... nor","not only... but also"]},
+ 'only if':{s:"The grant will be renewed ___ the researchers publish their results before the end of the year.",d:["even if","unless","whether"]},
+ 'as':{s:"___ the main road was closed for repairs, the delivery arrived two days late.",d:["Despite","Unless","Whereas"]},
+ 'whereas':{s:"Northern species adapted quickly to the warmer water, ___ southern ones declined sharply.",d:["therefore","because","in addition"]},
+ 'nevertheless':{s:"The treatment is expensive and unpleasant; it remains, ___, the only option available to these patients.",d:["therefore","moreover","likewise"]},
+ 'provided that':{s:"Students may retake the exam ___ they attend all of the preparatory sessions.",d:["even though","whereas","in spite of"]},
+ 'owing to':{s:"The museum closed three hours early ___ a power failure in the main building.",d:["although","whereas","in order to"]},
+ 'thus':{s:"The samples had been contaminated during transport and could ___ not be used.",d:["nevertheless","although","meanwhile"]},
+ 'consequently':{s:"Demand fell far below the forecast; ___, production was halted for six weeks.",d:["nevertheless","similarly","meanwhile"]},
+ 'moreover':{s:"The new method is twice as fast as the old one. ___, it is considerably cheaper.",d:["Nevertheless","In contrast","Otherwise"]},
+ 'furthermore':{s:"The report was submitted three weeks late. ___, several of its central figures were inaccurate.",d:["Nevertheless","Instead","In contrast"]},
+ 'aside from':{s:"___ a handful of minor spelling errors, the translation is excellent.",d:["Because of","Owing to","Instead of"]},
+ 'regardless of':{s:"The new policy applies to every citizen, ___ income or place of residence.",d:["because of","owing to","as a result of"]},
+ 'not only... but also':{s:"The drug turned out to be ___ ineffective ___ potentially dangerous.",d:["either... or","neither... nor","so... that"]},
+ 'irrespective of':{s:"Membership is open to all applicants, ___ their nationality or professional background.",d:["owing to","thanks to","as a result of"]},
+ // — אוצר מילים —
+ 'source':{s:"Investigators have yet to identify the ___ of the contamination in the river.",d:["absence","income","phrase"]},
+ 'beyond':{s:"The damage to the manuscript was ___ repair, and the library was forced to discard it.",d:["within","under","against"]},
+ 'entirely':{s:"Her explanation was not ___ convincing, although it did answer some of our questions.",d:["rarely","barely","seldom"]},
+ 'device':{s:"The engineers built a small ___ that measures air quality in real time.",d:["source","phrase","fortune"]},
+ 'phrase':{s:"He kept repeating the same ___ until everyone in the room understood what he meant.",d:["device","income","era"]},
+ 'income':{s:"Families with a low ___ are eligible for a substantial reduction in tuition fees.",d:["fortune","source","absence"]},
+ 'fortune':{s:"He made a ___ selling software and retired before he turned forty.",d:["income","source","reservation"]},
+ 'characteristic':{s:"Patience is the most valuable ___ a negotiator can have.",d:["reservation","absence","era"]},
+ 'clarify':{s:"The minister was asked to ___ his remarks, which many listeners had found confusing.",d:["shrink","conceal","exaggerate"]},
+ 'prolonged':{s:"___ exposure to loud noise can cause permanent hearing loss.",d:["Scarce","Remote","Thorough"]},
+ 'reservation':{s:"She agreed to sign the contract with one ___: the deadline had to be extended.",d:["absence","era","fortune"]},
+ 'shrink':{s:"Wool sweaters tend to ___ badly if they are washed in hot water.",d:["clarify","expand","voice"]},
+ 'remote':{s:"After two weeks without contact, the chances of finding survivors were ___.",d:["thorough","prolonged","scarce"]},
+ 'thorough':{s:"The accident was followed by a ___ investigation that examined every part of the aircraft.",d:["remote","scarce","entire"]},
+ 'era':{s:"The invention of the printing press opened a new ___ in European history.",d:["source","phrase","absence"]},
+ 'absence':{s:"In the ___ of any real evidence, the case against him was dropped.",d:["source","era","income"]},
+ 'scarce':{s:"Fresh water became increasingly ___ as the drought entered its third year.",d:["thorough","remote","prolonged"]},
+ 'voice':{s:"Employees are encouraged to ___ their concerns at the monthly staff meeting.",d:["shrink","conceal","postpone"]},
+ 'unrest':{s:"Rising food prices led to months of political ___ across the region.",d:["absence","fortune","era"]}
+};
+/* מחזיר שאלת-משפט למילה, או null אם אי אפשר לבנות אחת.
+   גיבוי למילים שעדיין לא נכתב להן משפט ייעודי: משפט הדוגמה שכבר קיים בכרטיס. */
+function sentFor(w){
+  const it=SENT[w.w];
+  if(it)return {s:it.s,opts:[w.w,...it.d],authored:true};
+  if(!w.ex)return null;
+  // הסתרת המילה במשפט הדוגמה — כולל הטיות: sit→sits · deny→denied · admit→admitted
+  const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const b=w.w, forms=[esc(b)+'(s|es|ed|d|ing)?'];
+  if(/y$/.test(b))forms.push(esc(b.slice(0,-1))+'i(es|ed)');          // deny → denied
+  if(/[bcdfgklmnprstvz]$/.test(b))forms.push(esc(b)+b.slice(-1)+'(ed|ing)'); // admit → admitted
+  const re=new RegExp('\\b('+forms.join('|')+')\\b','i');
+  if(!re.test(w.ex))return null;
+  const cand=WORDS.filter(x=>x.w!==w.w&&Math.abs(x.lv-w.lv)<=1&&!/\.\.\./.test(x.w));
+  const pool=shuffle(cand).slice(0,3);
+  if(pool.length<3)return null;
+  return {s:w.ex.replace(re,'___'),opts:[w.w,...pool.map(x=>x.w)],authored:false};
+}
+function sentStem(q,note){
+  return (note?'<p class="sub">'+note+'</p>':'')+
+    '<div class="en">'+q.s.replace(/___/g,'<span class="blank">&nbsp;</span>')+'</div>';
+}
+
+/* מצב עצמאי: תרגול משפטים על המילים שכבר נלמדו (ברירת מחדל — של היום) */
+const wsent={queue:[],i:0,correct:0,wrong:0,order:[],opts:[]};
+function startWordSent(todayOnly){
+  document.getElementById('topbar').style.visibility='hidden';
+  const s=srsLoad();
+  let words=WORDS.filter(x=>s.cards[x.w]);           // רק מילים שנלמדו
+  if(todayOnly){
+    const t=todayKey();
+    const fresh=words.filter(x=>s.cards[x.w].seen===t);
+    if(fresh.length>=5)words=fresh;                   // המילים של היום, אם יש מספיק
+  }
+  const q=[];
+  for(const w of shuffle(words.slice())){
+    const it=sentFor(w);
+    if(it){q.push({word:w,q:it});}
+    if(q.length>=20)break;
+  }
+  if(!q.length){
+    app.innerHTML='<div class="card" style="text-align:center"><h2>עוד אין מספיק מילים</h2>'+
+      '<p class="sub">התרגול הזה בנוי מהמילים שכבר למדת. תעשה את מנת המילים של היום ותחזור לכאן.</p>'+
+      '<button class="btn" onclick="intro()">חזרה</button></div>';
+    return;
+  }
+  wsent.queue=q;wsent.i=0;wsent.correct=0;wsent.wrong=0;
+  renderWordSent();
+}
+function renderWordSent(){
+  const item=wsent.queue[wsent.i];
+  wsent.order=shuffle([0,1,2,3]);wsent.opts=item.q.opts;
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">משפטים על המילים שלי · '+(wsent.i+1)+' מתוך '+wsent.queue.length+'</p>'+
+    sentStem(item.q,'💡 קרא את כל המשפט קודם, ורק אז תסתכל על התשובות.')+
+    '<div class="opts">'+wsent.order.map((oi,vi)=>
+      '<button type="button" class="opt" onclick="wsentAnswer('+vi+')">'+
+      '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+item.q.opts[oi]+'</span></button>').join('')+
+    '</div></div>';
+}
+function wsentAnswer(vi){
+  const item=wsent.queue[wsent.i];
+  const right=wsent.order[vi]===0;
+  const s=srsLoad();const today=todayKey();
+  if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
+  if(right){wsent.correct++;s.log[today].c++;}
+  else{
+    wsent.wrong++;s.log[today].w++;
+    // ⚠️ טעות במשפט = המילה לא באמת יושבת. מחזירים אותה לחזרה מחר, בלי לאפס לגמרי.
+    const c=s.cards[item.word.w];
+    if(c){c.b=Math.max(1,Math.min(c.b,2));c.laps=(c.laps||0)+1;
+      const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);}
+  }
+  srsSave(s);
+  app.innerHTML='<div class="card">'+
+    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ התשובה: '+item.q.opts[0]+'</h2>')+
+    '<div class="en">'+item.q.s.replace(/___/g,'<b style="color:var(--good)">'+item.q.opts[0]+'</b>')+'</div>'+
+    '<div style="font-size:1.1rem;font-weight:600;margin-top:8px">'+item.word.w+' — '+item.word.t+'</div>'+
+    (right?'':'<p class="note">המילה תחזור אליך מחר בחזרות</p>')+
+    '<div class="actions"><button class="btn" onclick="wsentNext()">'+
+    (wsent.i<wsent.queue.length-1?'הבא ←':'סיום')+'</button></div></div>';
+}
+function wsentNext(){
+  wsent.i++;
+  if(wsent.i>=wsent.queue.length){
+    const tot=wsent.correct+wsent.wrong;
+    const pct=tot?Math.round(100*wsent.correct/tot):0;
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+wsent.correct+' מתוך '+tot+' ('+pct+'%)</h2>'+
+      '<p class="sub">'+(pct>=80?'המילים האלה כבר יושבות גם בתוך משפט — זה בדיוק מה שהמבחן בודק. 🎉'
+        :pct>=60?'בכיוון. המילים שטעית בהן יחזרו אליך מחר בחזרות.'
+        :'זה בדיוק הפער שסוגרים כאן — לזהות מילה בהקשר קשה יותר מלתרגם אותה. המילים האלה יחזרו מחר.')+'</p>'+
+      '<button class="btn ghost" onclick="intro()">חזרה למסך הבית</button></div>';
+  }else renderWordSent();
+}
+
 function startSCP(){
   document.getElementById('topbar').style.visibility='hidden';
   scp.i=0;scp.correct=0;renderSCPQ();
