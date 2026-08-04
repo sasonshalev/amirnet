@@ -1443,6 +1443,18 @@ function showTips(){
 function toggleTip(i){document.getElementById('tip'+i).classList.toggle('hidden');}
 
 /* ============ מבחני רמה + המסלול שלי (שיטת LexiBoost מותאמת) ============ */
+/* מדד השאלות האמיתיות (4.8) — המשתמש עשה 11 שאלות נית"ב וקיבל 55%. מספר בודד
+   אינו מדד; מה שמלמד הוא **המגמה**. לכן כל ריצה על שאלות אמת נשמרת ומוצגת במסלול,
+   עם רף הפטור (~75%) כקו יעד. ⚠️ אותן שאלות חוזרות — עלייה בגלל שינון תיראה כאן
+   כמו התקדמות אמיתית; לכן ההמלצה במסך היא להריץ במרווחים של שבוע, לא כל יום. */
+function drillsLoad(){try{return JSON.parse(localStorage.getItem('amirnet_drills'))||[];}catch(e){return [];}}
+function drillSave(kind,correct,total){
+  try{
+    const a=drillsLoad();
+    a.push({date:todayKey(),kind,correct,total,pct:Math.round(100*correct/total)});
+    localStorage.setItem('amirnet_drills',JSON.stringify(a.slice(-40)));
+  }catch(e){}
+}
 function levelsLoad(){try{return JSON.parse(localStorage.getItem('amirnet_levels'))||{};}catch(e){return {};}}
 function levelsSave(o){try{localStorage.setItem('amirnet_levels',JSON.stringify(o));}catch(e){}}
 function levelStats(l){
@@ -1555,6 +1567,32 @@ function showPath(){
     box('ג\'','חידוד אחרון',[
       'רק חזרות (בלי מילים חדשות בשבוע האחרון) + 2-3 סימולציות, כולל הבחינות הרשמיות של המרכז הארצי',
       '<b>השער:</b> ממוצע 130+ בשתי סימולציות → נרשמים למבחן האמיתי 🎓'],phaseB_done?'now':'lock')+
+    /* 4.8 — מדד השאלות האמיתיות. הוא יושב מעל הסימולציות בכוונה: זה המדד שיש
+       למשתמש **היום**, בעוד שהסימולציה הראשונה עוד רחוקה. */
+    (function(){
+      const dr=drillsLoad();
+      if(!dr.length)return '<div class="card"><h2>🎯 שאלות אמת — המדד שלי</h2>'+
+        '<p class="sub">עוד לא הרצת. 11 שאלות השלמת משפטים או 8 ניסוח מחדש — מבחינות אמיתיות של המרכז הארצי. זה המדד היחיד שמשקף את המבחן עצמו בשלב הזה.</p>'+
+        '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" onclick="startSCP()">✏️ השלמת משפטים</button>'+
+        '<button class="btn ghost" onclick="startRSP()">🎯 ניסוח מחדש</button></div></div>';
+      const last=dr[dr.length-1], best=Math.max(...dr.map(x=>x.pct));
+      const bars=dr.slice(-8).map(x=>{
+        const h=Math.max(6,Math.round(x.pct*0.7));
+        return '<div style="display:inline-block;width:34px;margin:0 3px;text-align:center">'+
+          '<div style="font-size:.72rem;font-variant-numeric:tabular-nums">'+x.pct+'%</div>'+
+          '<div style="height:'+h+'px;background:'+(x.pct>=75?'var(--good)':'var(--accent)')+';border-radius:3px 3px 0 0"></div>'+
+          '<div style="font-size:.62rem;color:var(--muted)">'+(x.kind==='scp'?'משפט':'ניסוח')+'</div>'+
+          '<div style="font-size:.62rem;color:var(--muted)">'+x.date.slice(5).split('-').reverse().join('.')+'</div></div>';
+      }).join('');
+      const gap=75-last.pct;
+      return '<div class="card"><h2>🎯 שאלות אמת — המדד שלי</h2>'+
+        '<div style="display:flex;align-items:flex-end;justify-content:center;min-height:100px;padding:8px 0;border-bottom:2px dashed var(--line)">'+bars+'</div>'+
+        '<p class="sub" style="margin-top:10px">אחרון: <b>'+last.pct+'%</b> · שיא: '+best+'% · רף הפטור: <b>75%</b>'+
+        (gap>0?' — חסרים '+gap+' נקודות':' — מעל הרף! 🎉')+'</p>'+
+        '<p class="note">'+(dr.length<2
+          ?'מדידה אחת אינה מגמה. הרץ שוב בעוד שבוע — בין לבין, המילים היומיות הן שמזיזות את המספר הזה.'
+          :'⚠️ אלה אותן שאלות בכל פעם, אז חלק מהעלייה הוא זיכרון. הרץ במרווח של שבוע, לא כל יום — אחרת המספר משקר.')+'</p></div>';
+    })()+
     '<div class="card"><h2>📊 הסימולציות שלי</h2>'+
     (sims.length?'<div style="display:flex;align-items:flex-end;justify-content:center;min-height:110px;padding:8px 0">'+simBars+'</div>':'<p class="sub">עוד אין — הסימולציה הראשונה מחכה בפאזה ב\'.</p>')+
     '<p style="margin-top:8px"><b>'+simRec+'</b></p></div>'+
@@ -1744,8 +1782,13 @@ function startWordSent(todayOnly){
     const fresh=words.filter(x=>s.cards[x.w].seen===t);
     if(fresh.length>=5)words=fresh;                   // המילים של היום, אם יש מספיק
   }
+  /* סדר: קודם מילים שכבר נכשלת בהן (laps), אחר-כך אקראי. אין טעם לתרגל
+     בהקשר דווקא את מה שכבר יושב. */
+  const s2=srsLoad();
+  const ordered=shuffle(words.slice()).sort((a,b)=>
+    ((s2.cards[b.w]&&s2.cards[b.w].laps)||0)-((s2.cards[a.w]&&s2.cards[a.w].laps)||0));
   const q=[];
-  for(const w of shuffle(words.slice())){
+  for(const w of ordered){
     const it=sentFor(w);
     if(it){q.push({word:w,q:it});}
     if(q.length>=20)break;
@@ -1836,6 +1879,7 @@ function scpNext(){
   scp.i++;
   if(scp.i>=SCP.length){
     const pct=Math.round(100*scp.correct/SCP.length);
+    drillSave('scp',scp.correct,SCP.length);
     app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+scp.correct+' מתוך '+SCP.length+' ('+pct+'%)</h2>'+
       '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות! 🎉':'רף הפטור ~75% — המילים מהתרגול היומי יסגרו את זה, תחזור לכאן בעוד שבוע')+'</p>'+
       '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
@@ -1878,6 +1922,7 @@ function rspNext(){
   rsp.i++;
   if(rsp.i>=RSP.length){
     const pct=Math.round(100*rsp.correct/RSP.length);
+    drillSave('rsp',rsp.correct,RSP.length);
     app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+rsp.correct+' מתוך '+RSP.length+' ('+pct+'%)</h2>'+
       '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות — מצוין!':'רף הפטור הוא ~75% — תחזור לתרגול הזה בעוד כמה ימים, המלכודות נלמדות')+'</p>'+
       '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
