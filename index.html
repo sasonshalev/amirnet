@@ -1,0 +1,1767 @@
+<title>אמירנט — תרגול</title>
+<!-- ⚠️ 4.8: הדף מתארח בכתובת ציבורית (GitHub Pages) כדי שספארי באייפון תשמור
+     את ההתקדמות. לכן אין בו שם, ואין אינדוקס במנועי חיפוש. -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#1C2733; --muted:#5B6B7C;
+    --accent:#1F4E79; --accent-ink:#FFFFFF; --line:#DCE3EA;
+    --good:#2E7D4F; --bad:#B3403A; --warn:#8A6D1F; --soft:#EDF2F7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#131A22; --surface:#1C2530; --ink:#E8EDF3; --muted:#93A2B3;
+      --accent:#6EA5D8; --accent-ink:#0E1720; --line:#2C3947;
+      --good:#6FBF8F; --bad:#E08A85; --warn:#D9BC6A; --soft:#232F3C;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F4F6F8; --surface:#FFFFFF; --ink:#1C2733; --muted:#5B6B7C;
+    --accent:#1F4E79; --accent-ink:#FFFFFF; --line:#DCE3EA;
+    --good:#2E7D4F; --bad:#B3403A; --warn:#8A6D1F; --soft:#EDF2F7;
+  }
+  :root[data-theme="dark"]{
+    --bg:#131A22; --surface:#1C2530; --ink:#E8EDF3; --muted:#93A2B3;
+    --accent:#6EA5D8; --accent-ink:#0E1720; --line:#2C3947;
+    --good:#6FBF8F; --bad:#E08A85; --warn:#D9BC6A; --soft:#232F3C;
+  }
+  html{background:var(--bg)}
+  body{
+    margin:0; direction:rtl; color:var(--ink); background:var(--bg);
+    font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:700px; margin:0 auto; padding:16px 16px 64px}
+  .topbar{
+    position:sticky; top:0; z-index:5; background:var(--surface);
+    border-bottom:1px solid var(--line); padding:10px 14px;
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+  }
+  .topbar .sec-name{font-weight:600; font-size:.95rem}
+  .topbar .qcount{color:var(--muted); font-size:.85rem}
+  .timer{
+    font-variant-numeric:tabular-nums; font-weight:700; font-size:1.05rem;
+    padding:2px 10px; border-radius:6px; background:var(--soft); color:var(--ink);
+    min-width:64px; text-align:center;
+  }
+  .timer.low{background:var(--bad); color:#fff}
+  .dots{display:flex; gap:5px}
+  .dots span{width:9px; height:9px; border-radius:50%; background:var(--line); display:inline-block}
+  .dots span.done{background:var(--accent)}
+  .dots span.now{background:var(--accent); outline:2px solid var(--accent); outline-offset:2px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:22px; margin-top:18px;
+  }
+  h1{font-size:1.45rem; margin:0 0 4px; text-wrap:balance}
+  h2{font-size:1.15rem; margin:0 0 10px}
+  .sub{color:var(--muted); font-size:.92rem; margin:0 0 14px}
+  .en{
+    direction:ltr; text-align:left; font-family:Georgia,"Times New Roman",serif;
+    font-size:1.12rem; line-height:1.65; margin:14px 0 18px; color:var(--ink);
+  }
+  .en .blank{border-bottom:2px solid var(--accent); padding:0 14px; white-space:nowrap}
+  .passage{
+    direction:ltr; text-align:left; font-family:Georgia,serif; font-size:1.02rem;
+    line-height:1.7; background:var(--soft); border-radius:8px; padding:16px 18px;
+    max-height:44vh; overflow-y:auto; margin:12px 0 16px;
+  }
+  .passage h3{margin:0 0 8px; font-size:1.05rem}
+  .opts{display:flex; flex-direction:column; gap:9px}
+  .opt{
+    direction:ltr; text-align:left; font-family:Georgia,serif; font-size:1.02rem;
+    display:flex; align-items:flex-start; gap:10px; padding:11px 13px;
+    border:1.5px solid var(--line); border-radius:8px; background:var(--surface);
+    cursor:pointer; color:var(--ink); width:100%;
+  }
+  .opt:hover{border-color:var(--accent)}
+  .opt.sel{border-color:var(--accent); background:var(--soft)}
+  .opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .opt .letter{
+    font-family:"Segoe UI",sans-serif; font-weight:700; font-size:.82rem;
+    color:var(--muted); border:1px solid var(--line); border-radius:5px;
+    padding:1px 7px; flex-shrink:0; margin-top:2px;
+  }
+  .opt.sel .letter{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+  .btn{
+    display:inline-block; border:none; border-radius:8px; padding:11px 26px;
+    font-size:1rem; font-weight:600; font-family:inherit; cursor:pointer;
+    background:var(--accent); color:var(--accent-ink);
+  }
+  .btn:disabled{opacity:.45; cursor:default}
+  .btn.ghost{background:var(--soft); color:var(--ink)}
+  .btn:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+  .actions{margin-top:20px; display:flex; gap:10px; align-items:center}
+  .note{font-size:.85rem; color:var(--muted)}
+  ul.rules{padding-right:20px; margin:10px 0}
+  ul.rules li{margin-bottom:7px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  @media (max-width:520px){.grid2{grid-template-columns:1fr}}
+  .stat{background:var(--soft); border-radius:8px; padding:12px 14px}
+  .stat .k{font-size:.8rem; color:var(--muted)}
+  .stat .v{font-size:1.3rem; font-weight:700; font-variant-numeric:tabular-nums}
+  .score-hero{text-align:center; padding:26px 0 18px}
+  .score-hero .big{font-size:3.4rem; font-weight:800; font-variant-numeric:tabular-nums; line-height:1}
+  .score-hero .range{color:var(--muted); font-size:.9rem; margin-top:6px}
+  .bar{height:10px; border-radius:5px; background:var(--line); position:relative; margin:18px 8px 4px}
+  .bar .fill{position:absolute; right:0; top:0; bottom:0; border-radius:5px; background:var(--accent)}
+  .bar .mark{position:absolute; top:-5px; width:2px; height:20px; background:var(--bad)}
+  .bar-labels{display:flex; justify-content:space-between; color:var(--muted); font-size:.78rem; margin:0 8px}
+  table.rep{width:100%; border-collapse:collapse; margin-top:8px; font-size:.95rem}
+  table.rep th{color:var(--muted); font-weight:600; font-size:.82rem; text-align:right; padding:6px 4px; border-bottom:1px solid var(--line)}
+  table.rep td{padding:8px 4px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums}
+  .pill{display:inline-block; padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600}
+  .pill.good{background:var(--good); color:#fff}
+  .pill.mid{background:var(--warn); color:#fff}
+  .pill.bad{background:var(--bad); color:#fff}
+  .hidden{display:none}
+  .disclaimer{border-right:3px solid var(--warn); padding:8px 14px; background:var(--soft); border-radius:6px; font-size:.87rem; color:var(--muted); margin-top:18px}
+  @media (prefers-reduced-motion: no-preference){
+    .card{animation:rise .25s ease}
+    @keyframes rise{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+  }
+</style>
+
+<div class="topbar" id="topbar" style="visibility:hidden">
+  <div>
+    <div class="sec-name" id="secName"></div>
+    <div class="qcount" id="qCount"></div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="timer" id="timer">--:--</div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<script>
+'use strict';
+/* ============ בנק שאלות ============
+   d = רמת קושי 1-5 · layer = שכבת אוצר מילים · c = אינדקס תשובה נכונה (לפני ערבוב) */
+
+const VOCAB = { // בדיקת אוצר מילים — 5 רמות × 12 מילים · c=0 תמיד (מעורבב בתצוגה)
+ 1:[
+  {w:"improve",o:["לשפר","להרוס","לקנות","לשכוח"]},
+  {w:"decide",o:["להחליט","לדחות","לצייר","לרוץ"]},
+  {w:"allow",o:["להרשות","לאסור","לשאול","לבנות"]},
+  {w:"receive",o:["לקבל","לשלוח","למכור","להפסיד"]},
+  {w:"dangerous",o:["מסוכן","בטוח","יקר","רחוק"]},
+  {w:"expensive",o:["יקר","זול","קטן","חדש"]},
+  {w:"journey",o:["מסע","מטבח","חלום","שיעור"]},
+  {w:"choose",o:["לבחור","לאבד","לסגור","לצחוק"]},
+  {w:"important",o:["חשוב","קל","ריק","איטי"]},
+  {w:"remember",o:["לזכור","לשכוח","לרשום","לחזור"]},
+  {w:"build",o:["לבנות","להרוס","לקנות","לנוח"]},
+  {w:"answer",o:["תשובה","שאלה","מספר","סיפור"]}],
+ 2:[
+  {w:"avoid",o:["להימנע","להשיג","להעניש","לאשר"]},
+  {w:"provide",o:["לספק","למנוע","לדרוש","לזרוק"]},
+  {w:"increase",o:["להגדיל","להקטין","להישאר","לשבור"]},
+  {w:"common",o:["נפוץ","נדיר","זול","רועש"]},
+  {w:"require",o:["לדרוש","להציע","לוותר","לשמור"]},
+  {w:"prevent",o:["למנוע","לעודד","להבטיח","לתקן"]},
+  {w:"achieve",o:["להשיג","להפסיד","לנסות","לוותר"]},
+  {w:"similar",o:["דומה","שונה","רחוק","ברור"]},
+  {w:"encourage",o:["לעודד","להרתיע","לאסור","להעליב"]},
+  {w:"decrease",o:["להקטין","להגדיל","להמשיך","להתחיל"]},
+  {w:"discover",o:["לגלות","להסתיר","להמציא","לתכנן"]},
+  {w:"protect",o:["להגן","לתקוף","להזהיר","להעניש"]}],
+ 3:[
+  {w:"essential",o:["חיוני","מיותר","זמני","נדיר"]},
+  {w:"evidence",o:["ראיה, הוכחה","דעה","טעות","מטרה"]},
+  {w:"significant",o:["משמעותי","זניח","מקרי","זהה"]},
+  {w:"obtain",o:["להשיג","לאבד","להציע","לדחות"]},
+  {w:"maintain",o:["לתחזק, לשמר","להרוס","לשנות","להתלונן"]},
+  {w:"purpose",o:["מטרה","תוצאה","הפתעה","בעיה"]},
+  {w:"reduce",o:["להפחית","להגביר","לחלק","לאסוף"]},
+  {w:"benefit",o:["תועלת","נזק","חוב","עונש"]},
+  {w:"affect",o:["להשפיע","להתעלם","להעריך","לחקות"]},
+  {w:"accurate",o:["מדויק","שגוי","משוער","מהיר"]},
+  {w:"claim",o:["לטעון","להכחיש","להוכיח","לוותר"]},
+  {w:"prohibit",o:["לאסור","להתיר","להמליץ","לעכב"]}],
+ 4:[
+  {w:"reluctant",o:["חסר רצון, מהסס","להוט","עייף","בטוח"]},
+  {w:"abundant",o:["שופע, מצוי בשפע","נדיר","יבש","זול"]},
+  {w:"deliberate",o:["מכוון, מתוכנן","מקרי","פזיז","גלוי"]},
+  {w:"conceal",o:["להסתיר","לחשוף","להעניש","לאחסן"]},
+  {w:"diminish",o:["להצטמצם, לפחות","לגדול","להתפזר","להתחזק"]},
+  {w:"profound",o:["עמוק","שטחי","רועש","פשוט"]},
+  {w:"adverse",o:["שלילי, מזיק","חיובי","זמני","צפוי"]},
+  {w:"feasible",o:["בר-ביצוע, אפשרי","בלתי אפשרי","יקר","מסוכן"]},
+  {w:"neglect",o:["להזניח","לטפח","לזכור","להאשים"]},
+  {w:"coherent",o:["עקבי וברור","מבולבל","קצר","משכנע"]},
+  {w:"candid",o:["כן וגלוי","ערמומי","ביישן","זהיר"]},
+  {w:"fragile",o:["שביר, עדין","חזק","גמיש","כבד"]}],
+ 5:[
+  {w:"tenuous",o:["רופף, חלש","מוצק","ברור","נפוץ"]},
+  {w:"cogent",o:["משכנע","מבולבל","משעמם","שקרי"]},
+  {w:"ubiquitous",o:["נמצא בכל מקום","נדיר","סמוי","זמני"]},
+  {w:"scathing",o:["נוקב, צורב","מחמיא","אדיש","מהוסס"]},
+  {w:"devoid",o:["נטול, חסר","מלא","עשיר","גדוש"]},
+  {w:"meticulous",o:["קפדני, דקדקן","רשלני","מהיר","נדיב"]},
+  {w:"clandestine",o:["חשאי","גלוי","רשמי","חוקי"]},
+  {w:"alleviate",o:["להקל, לשכך","להחמיר","להתעלם","לגרום"]},
+  {w:"venerate",o:["להעריץ","לבזות","לשכוח","לחקות"]},
+  {w:"innocuous",o:["לא מזיק, תמים","מסוכן","מרשים","נדיר"]},
+  {w:"replete",o:["גדוש, מלא","ריק","חסר","דל"]},
+  {w:"obsolete",o:["מיושן","חדשני","שימושי","נפוץ"]}]
+};
+const VOCAB_LEVEL_NAMES={1:"בסיס (חטיבה)",2:"בגרות",3:"בגרות 5 יח' / מתקדם",4:"אקדמי בסיסי",5:"אקדמי גבוה"};
+
+const SC = { // השלמת משפטים — 5 רמות × 4 שאלות
+ 1:[
+  {s:"Dogs are known for their ___ to their owners.",o:["loyalty","distance","weather","height"],c:0},
+  {s:"She was completely ___ after running the marathon.",o:["exhausted","delicious","frequent","accurate"],c:0},
+  {s:"The library is a quiet place where students can ___ on their studies.",o:["concentrate","celebrate","argue","travel"],c:0},
+  {s:"It started raining heavily, so we ___ the picnic to the following week.",o:["postponed","painted","measured","answered"],c:0}],
+ 2:[
+  {s:"The new law is intended to ___ air pollution in large cities.",o:["reduce","persuade","inhabit","rescue"],c:0},
+  {s:"Because the instructions were ___, many customers assembled the shelf incorrectly.",o:["confusing","durable","spacious","generous"],c:0},
+  {s:"The two countries signed an agreement to ___ trade between them.",o:["expand","bury","dismiss","injure"],c:0},
+  {s:"Doctors agree that regular exercise can ___ the risk of heart disease.",o:["diminish","flatter","summon","adore"],c:0}],
+ 3:[
+  {s:"The scientist's findings were later ___ by several independent laboratories.",o:["confirmed","neglected","worshipped","inflated"],c:0},
+  {s:"Despite decades of research, the causes of the disease remain largely ___.",o:["obscure","abundant","courteous","edible"],c:0},
+  {s:"The government took immediate steps to ___ the effects of the flood.",o:["mitigate","prolong","fabricate","endorse"],c:0},
+  {s:"His argument was so ___ that even his opponents were eventually persuaded.",o:["compelling","fragile","redundant","hostile"],c:0}],
+ 4:[
+  {s:"The witness gave a detailed and ___ account of the accident, which matched the physical evidence.",o:["coherent","negligible","opulent","clandestine"],c:0},
+  {s:"Far from resolving the dispute, the ambassador's remarks only served to ___ tensions between the two nations.",o:["exacerbate","alleviate","consolidate","venerate"],c:0},
+  {s:"The evidence against the old theory is now so ___ that few researchers still defend it.",o:["overwhelming","hospitable","ornamental","punctual"],c:0},
+  {s:"In his memoirs, the general was surprisingly ___ about his failures, discussing them openly and at length.",o:["candid","devious","immune","fertile"],c:0}],
+ 5:[
+  {s:"Her conclusions rest on ___ evidence and should therefore be treated with considerable caution.",o:["tenuous","cogent","meticulous","affluent"],c:0},
+  {s:"The critic's ___ review left no doubt about his utter contempt for the novel.",o:["scathing","laudatory","tepid","oblique"],c:0},
+  {s:"Once considered ___, the practice of bloodletting has long been abandoned by physicians.",o:["efficacious","deleterious","innocuous","ubiquitous"],c:0},
+  {s:"The senator's speech was little more than empty rhetoric, ___ of any concrete proposals.",o:["devoid","replete","emblematic","apprised"],c:0}]
+};
+
+const RS = { // ניסוח מחדש — קל / בינוני / קשה × 3
+ L:[
+  {d:2,s:"John is taller than any other student in his class.",
+   o:["No student in John's class is as tall as he is.",
+      "Some students in John's class are taller than John.",
+      "John is one of the shortest students in his class.",
+      "Most students in John's class are about John's height."],c:0},
+  {d:2,s:"She rarely eats meat.",
+   o:["She does not eat meat very often.",
+      "She never eats meat.",
+      "She eats meat quite frequently.",
+      "She refuses to eat meat that is rare."],c:0},
+  {d:2,s:"The store closed earlier than usual yesterday.",
+   o:["Yesterday the store did not stay open as late as it normally does.",
+      "The store usually closes early in the day.",
+      "Yesterday the store opened earlier than usual.",
+      "The store stayed open later than usual yesterday."],c:0}],
+ M:[
+  {d:3,s:"Hardly anyone attended the professor's lecture.",
+   o:["Very few people came to the professor's lecture.",
+      "The professor's lecture was attended by almost everyone.",
+      "No one was allowed to attend the professor's lecture.",
+      "The professor's lecture was hardly interesting to anyone."],c:0},
+  {d:3,s:"If it had not rained, the concert would have taken place outdoors.",
+   o:["The concert was not held outdoors because of the rain.",
+      "The concert took place outdoors despite the rain.",
+      "The rain stopped just before the outdoor concert began.",
+      "The concert will be held outdoors unless it rains."],c:0},
+  {d:3,s:"The manager, unlike her predecessor, encourages employees to voice criticism.",
+   o:["The previous manager did not encourage employees to express criticism, but the current one does.",
+      "Neither the manager nor her predecessor welcomes criticism from employees.",
+      "The manager criticizes her employees more than her predecessor did.",
+      "Employees are encouraged to avoid criticizing the current manager."],c:0}],
+ H:[
+  {d:5,s:"Not until the results were published did the researchers realize the extent of their error.",
+   o:["The researchers became aware of how serious their error was only after the results were published.",
+      "The researchers refused to publish results they knew to be erroneous.",
+      "The published results contained fewer errors than the researchers had expected.",
+      "The researchers realized their error just in time to prevent publication of the results."],c:0},
+  {d:5,s:"However well intentioned, the reforms failed to address the root causes of poverty.",
+   o:["Although the reforms were made with good intentions, they did not deal with the fundamental causes of poverty.",
+      "The reforms failed because they were not well intentioned.",
+      "The reforms succeeded in addressing poverty's root causes, despite doubts about their intentions.",
+      "Good intentions are the root cause of the reforms' failure to reduce poverty."],c:0},
+  {d:5,s:"Scarcely had the ceasefire been declared when fighting resumed.",
+   o:["Fighting broke out again almost immediately after the ceasefire was declared.",
+      "The ceasefire was declared only after the fighting had already resumed.",
+      "The ongoing fighting made it impossible to declare a ceasefire.",
+      "The ceasefire held for a long time before fighting finally resumed."],c:0}]
+};
+
+const READING = {
+ M:{d:3,title:"The Placebo Effect",
+  text:"For centuries, physicians have observed a puzzling phenomenon: patients sometimes improve after receiving treatments that contain no active medical ingredient. A sugar pill, presented with confidence as a powerful drug, can reduce pain, ease anxiety, and even improve symptoms of Parkinson's disease. This phenomenon, known as the placebo effect, was long dismissed by the medical community as a mere nuisance — an obstacle that made it harder to test whether new drugs really worked.\n\nIn recent decades, however, attitudes have changed dramatically. Brain imaging studies have shown that placebo treatments can produce measurable changes in brain activity, including the release of the body's own pain-relieving chemicals. The effect, researchers now argue, is not imaginary at all: it is a real biological response, triggered by the patient's expectations and by the ritual of treatment itself. The color of a pill, the confidence of the doctor, and even the price of the medicine have all been shown to influence its strength.\n\nThese findings have opened a difficult ethical debate. Some physicians argue that placebos should be used deliberately, since they can provide genuine relief without side effects. Others insist that doing so requires deceiving patients, and that trust between doctor and patient — once broken — is nearly impossible to restore. The question of whether comfort can ever justify deception remains unresolved.",
+  qs:[
+   {tag:"רעיון מרכזי",q:"The main purpose of the passage is to —",
+    o:["describe how the placebo effect went from being dismissed to being taken seriously",
+       "prove that most modern drugs are no better than sugar pills",
+       "explain how brain imaging technology was developed",
+       "argue that doctors should never deceive their patients"],c:0},
+   {tag:"אוצר מילים בהקשר",q:"The word \"dismissed\" (paragraph 1) most nearly means —",
+    o:["rejected as unimportant","sent away from a job","examined carefully","described accurately"],c:0},
+   {tag:"פרט מהקטע",q:"According to the passage, brain imaging studies demonstrated that —",
+    o:["placebo treatments can cause measurable changes in brain activity",
+       "expensive medicines are always more effective than cheap ones",
+       "Parkinson's disease can be cured by sugar pills",
+       "doctors' confidence has no effect on treatment outcomes"],c:0},
+   {tag:"הסקה",q:"It can be inferred that the deliberate use of placebos is controversial mainly because —",
+    o:["it may involve misleading patients",
+       "placebos cause dangerous side effects",
+       "placebos are too expensive to produce",
+       "brain imaging cannot detect their effects"],c:0},
+   {tag:"מטרת פסקה",q:"The final paragraph serves mainly to —",
+    o:["present an ethical dilemma raised by the research findings",
+       "summarize the history of the placebo effect",
+       "describe a new brain imaging technique",
+       "reject the conclusions described earlier in the passage"],c:0}]},
+ H:{d:4,title:"Language and Thought",
+  text:"Does the language we speak shape the way we think? In its strongest form, this idea — often associated with the linguist Benjamin Lee Whorf — holds that language determines thought entirely: speakers of different languages are said to inhabit different mental worlds. Whorf famously claimed that the Hopi language contains no words or grammatical forms referring to time, and that its speakers therefore conceive of reality in a fundamentally different way. Later research showed this claim to be simply false; Hopi does mark time, and the strong version of the hypothesis is now regarded by most linguists as untenable.\n\nYet the debate did not end there. A more modest proposal — that language influences thought rather than determines it — has proved far more durable, and in recent years it has accumulated impressive experimental support. In one well-known study, speakers of Russian, which has separate basic words for light blue and dark blue, were faster than English speakers at distinguishing between shades that crossed this linguistic boundary. Similar effects have been documented in how speakers of different languages perceive space, number, and even blame for accidental events.\n\nCritics caution that these effects, while real, are typically small and can often be reduced or eliminated when subjects are prevented from silently naming what they see. Language, on this view, is less a prison that confines thought than a habit that gently channels it. The truth, as so often in science, appears to lie between the extremes.",
+  qs:[
+   {tag:"רעיון מרכזי",q:"The central idea of the passage is that —",
+    o:["the claim that language completely determines thought has been rejected, but a weaker version has gained empirical support",
+       "the Hopi language proves that speakers of different languages inhabit different mental worlds",
+       "experiments on color perception have finally proved Whorf's original hypothesis",
+       "language has been shown to have no influence whatsoever on human thought"],c:0},
+   {tag:"אוצר מילים בהקשר",q:"The word \"untenable\" (paragraph 1) most nearly means —",
+    o:["impossible to defend","difficult to translate","widely accepted","only partially proven"],c:0},
+   {tag:"פרט מהקטע",q:"The study involving Russian speakers is mentioned in order to show that —",
+    o:["having separate words for two shades can speed up the ability to distinguish between them",
+       "Russian speakers have better eyesight than English speakers",
+       "English lacks any way of describing light and dark blue",
+       "color perception is identical across all languages"],c:0},
+   {tag:"הסקה",q:"The author's attitude toward the moderate version of the hypothesis can best be described as —",
+    o:["cautious acceptance","complete rejection","open mockery","unqualified enthusiasm"],c:0},
+   {tag:"מטרת אזכור",q:"The author mentions Whorf's claim about Hopi mainly as an example of —",
+    o:["an early, overstated claim that was later shown to be false",
+       "the most convincing evidence for the strong hypothesis",
+       "a language that genuinely lacks any reference to time",
+       "a study involving the perception of color"],c:0}]}
+};
+
+/* ============ מצב ריצה ============ */
+const state={
+  chapters:[],      // נבנה דינמית
+  chIdx:-1, qIdx:0, selected:-1, order:[],
+  timerId:null, remain:0, chapterTotal:0, qStart:0,
+  log:[],           // {skill,d,layer,correct,timeMs,section,answered}
+  chTimes:[],       // {name, used, total, expired}
+  scBand:3, rsCorrect:0,
+  earned:0, maxSeen:0
+};
+const SKILL_NAMES={sc:"השלמת משפטים",rs:"ניסוח מחדש",rc:"הבנת הנקרא"};
+const app=document.getElementById('app');
+
+function layerOf(d){return d<=2?'basic':(d<=4?'mid':'academic');}
+function weight(d){return d+2;}
+function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0');}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ============ מסך הבית — דשבורד ============ */
+/* ⚠️ 4.8: הרצף הראה 0 ביום השלישי. הבדיקה הזאת עונה על השאלה "האם הדפדפן בכלל
+   שומר?" — בספארי פרטי / כשהאחסון חסום, הכתיבה נכשלת בשקט וכל יום מתחיל מאפס. */
+function storageOK(){
+  try{
+    localStorage.setItem('amirnet_probe','1');
+    const ok=localStorage.getItem('amirnet_probe')==='1';
+    localStorage.removeItem('amirnet_probe');
+    return ok;
+  }catch(e){return false;}
+}
+function intro(){
+  document.getElementById('topbar').style.visibility='hidden';
+  const st=srsStats();
+  const storeBad=!storageOK()||window._srsWriteFailed;
+  app.innerHTML=`
+  ${storeBad?`<div class="card" style="border:2px solid var(--bad)">
+    <h2 style="color:var(--bad)">⚠️ הדפדפן לא שומר את ההתקדמות</h2>
+    <p class="sub">לכן הרצף חוזר ל-0 בכל כניסה. זה לא באג בתרגול — זה מצב הדפדפן:</p>
+    <p class="sub">1. אם אתה בגלישה פרטית בספארי — לצאת ממנה ולהיכנס בחלון רגיל.<br>
+    2. להיכנס תמיד מאותה סימנייה בספארי (לא מוואטסאפ, לא מאייקון "מסך הבית" — לכל אחד מהם אחסון נפרד).<br>
+    3. הגדרות ← ספארי ← לוודא ש"חסום את כל קובצי Cookie" כבוי.</p>
+  </div>`:''}
+  <div class="card">
+    <h1>אמירנט — מערכת התרגול שלי</h1>
+    <p class="sub">היעד: 134+ · האבחון אמר: הבסיס חזק, הפער מתחיל במילים של רמה 2-3 — ושם אנחנו תוקפים</p>
+    <div class="grid2" style="margin:14px 0">
+      <div class="stat"><div class="k">🔥 רצף ימים</div><div class="v">${st.streak}</div>
+        <div class="note" style="margin:0">${st.totalDays} ימי תרגול · ${st.cards} מילים שמורות</div></div>
+      <div class="stat"><div class="k">⏰ חזרות שמחכות</div><div class="v">${st.due}</div></div>
+      <div class="stat"><div class="k">📚 מילים בתהליך</div><div class="v">${st.learning}</div></div>
+      <div class="stat"><div class="k">✅ מילים חזקות</div><div class="v">${st.mastered} / ${WORDS.length}</div></div>
+    </div>
+    <button class="btn" style="font-size:1.1rem;width:100%" onclick="startSession()">▶ התרגול היומי שלי${st.due?' ('+st.due+' חזרות + מילים חדשות)':''}</button>
+    ${st.due?'<button class="btn ghost" style="width:100%;margin-top:8px" onclick="startSession(true)">🪫 יום עמוס? רק חזרות ('+st.due+') — בלי מילים חדשות</button>':''}
+    <p class="note" style="text-align:center;margin-top:8px">~20 דקות ביום. ביום קשה — לפחות החזרות, העיקר לא לשבור את הרצף.</p>
+  </div>
+  <div class="card">
+    <h2 style="font-size:1rem">השבוע שלי</h2>
+    ${(function(){
+      const s=srsLoad();let days=0,nw=0,c=0,w=0;
+      for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);
+        const e=s.log[dayKey(d)];
+        if(e){days++;nw+=e.n||0;c+=e.c||0;w+=e.w||0;}}
+      const acc=(c+w)?Math.round(100*c/(c+w)):0;
+      return '<p class="sub">'+days+' ימי תרגול · '+nw+' מילים חדשות · דיוק '+acc+'%'+
+        (days>=5?' — שבוע מעולה! 🔥':days>=3?' — בכיוון טוב':' — השבוע עוד לפניך')+'</p>';
+    })()}
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="showPath()">🗺️ המסלול שלי ל-134</button>
+      <button class="btn ghost" onclick="startSCP()">✏️ השלמת משפטים — שאלות אמיתיות</button>
+      <button class="btn ghost" onclick="startRSP()">🎯 ניסוח מחדש — שאלות אמיתיות</button>
+      <button class="btn ghost" onclick="showTips()">🧠 שיטות וטיפים למבחן</button>
+      <button class="btn ghost" onclick="startVocab()">🔤 בדיקת רמה חוזרת</button>
+      <button class="btn ghost" onclick="fullIntro()">📝 סימולציית מבחן מלאה</button>
+      <button class="btn ghost" onclick="showTransfer()">🔄 גיבוי / העברת התקדמות</button>
+    </div>
+    <p class="note" style="margin-top:10px">מילים — בטלפון, כל יום. סימולציות — במחשב, כמו במבחן האמיתי (הן לא צריכות סנכרון).</p>
+  </div>`;
+}
+
+/* ============ שלב א' — בדיקת אוצר מילים ============ */
+const vstate={level:1,idx:0,order:[],results:[],qStart:0};
+function startVocab(){
+  vstate.level=1;vstate.idx=0;vstate.results=[];
+  document.getElementById('topbar').style.visibility='hidden';
+  renderVocabQ();
+}
+function renderVocabQ(){
+  const q=VOCAB[vstate.level][vstate.idx];
+  vstate.order=shuffle([0,1,2,3]);
+  vstate.qStart=Date.now();
+  const done=vstate.results.length, total=60;
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">מילה '+(done+1)+' מתוך עד '+total+' · רמה '+vstate.level+' מתוך 5</p>'+
+    '<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:20px 0">'+q.w+'</div>'+
+    '<p class="sub" style="text-align:center">מה פירוש המילה?</p>'+
+    '<div class="opts">'+vstate.order.map((oi,vi)=>
+      '<button type="button" class="opt" style="direction:rtl;text-align:right;font-family:inherit" onclick="vAnswer('+vi+')">'+
+      '<span class="letter">'+['א','ב','ג','ד'][vi]+'</span><span>'+q.o[oi]+'</span></button>').join('')+
+    '</div><div class="actions" style="justify-content:center">'+
+    '<button class="btn ghost" onclick="vAnswer(-1)">🤷 לא יודע — הבא</button></div></div>';
+}
+function vAnswer(vi){
+  const q=VOCAB[vstate.level][vstate.idx];
+  const known=vi>=0&&vstate.order[vi]===0;
+  vstate.results.push({w:q.w,t:q.o[0],level:vstate.level,known,
+    skipped:vi<0,sec:Math.round((Date.now()-vstate.qStart)/1000)});
+  vstate.idx++;
+  if(vstate.idx>=VOCAB[vstate.level].length){
+    const lv=vstate.results.filter(r=>r.level===vstate.level);
+    const correct=lv.filter(r=>r.known).length;
+    // רמה קרסה (4 ומטה מתוך 12) — אין טעם להמשיך לרמות קשות יותר
+    if(correct<=4||vstate.level===5){vocabReport();return;}
+    vstate.level++;vstate.idx=0;
+  }
+  renderVocabQ();
+}
+function vocabReport(){
+  const res=vstate.results;
+  const levels=[1,2,3,4,5].map(l=>{
+    const rows=res.filter(r=>r.level===l);
+    if(!rows.length)return null;
+    return {l,total:rows.length,correct:rows.filter(r=>r.known).length};
+  }).filter(Boolean);
+  // "הרמה שלך" = הרמה הגבוהה ביותר עם 75%+ שליטה
+  let mastered=0;
+  for(const lv of levels){if(lv.correct/lv.total>=0.75)mastered=lv.l;else break;}
+  const missed=res.filter(r=>!r.known);
+  const testedMax=levels[levels.length-1].l;
+  const result={type:'vocab',date:new Date().toISOString(),
+    masteredLevel:mastered,testedUpTo:testedMax,
+    levels:levels.map(x=>({level:x.l,correct:x.correct,total:x.total})),
+    missed:missed.map(m=>({w:m.w,t:m.t,level:m.level}))};
+  try{
+    const hist=JSON.parse(localStorage.getItem('amirnet_vocab')||'[]');
+    hist.push(result);localStorage.setItem('amirnet_vocab',JSON.stringify(hist));
+  }catch(e){}
+  window._vresult=result;
+  const lvRow=(x)=>{
+    const pct=Math.round(100*x.correct/x.total);
+    const cls=pct>=75?'good':(pct>=50?'mid':'bad');
+    return '<tr><td>רמה '+x.l+' — '+VOCAB_LEVEL_NAMES[x.l]+'</td><td>'+x.correct+' / '+x.total+
+      '</td><td><span class="pill '+cls+'">'+pct+'%</span></td></tr>';
+  };
+  app.innerHTML=`
+  <div class="card">
+    <div class="score-hero">
+      <div class="sub">בדיקת אוצר מילים — תוצאה</div>
+      <div class="big" style="font-size:2.2rem">רמה ${mastered} מתוך 5</div>
+      <div class="range">${mastered?'שליטה מלאה עד: '+VOCAB_LEVEL_NAMES[mastered]:'עוד אין רמה עם שליטה מלאה — מתחילים מהיסודות, וזה בסדר גמור'}</div>
+    </div>
+    <table class="rep"><tr><th>רמה</th><th>נכונות</th><th>שליטה</th></tr>${levels.map(lvRow).join('')}</table>
+    ${testedMax<5?'<p class="sub" style="margin-top:10px">הבדיקה נעצרה ברמה '+testedMax+' — רמות גבוהות יותר יילמדו בהמשך, לפי הסדר.</p>':''}
+  </div>
+  ${missed.length?`<div class="card"><h2>המילים שנלמד ראשונות (${missed.length})</h2>
+    <p class="sub">אלה המילים שלא ידעת — הן יהיו תחילת תוכנית הלימוד שלך</p>
+    <table class="rep"><tr><th style="text-align:left">מילה</th><th>תרגום</th><th>רמה</th></tr>
+    ${missed.map(m=>'<tr><td style="direction:ltr;text-align:left;font-family:Georgia,serif">'+m.w+'</td><td>'+m.t+'</td><td>'+m.level+'</td></tr>').join('')}</table>
+  </div>`:''}
+  <div class="card">
+    <h2>מה עכשיו?</h2>
+    <p>לחץ "העתק תוצאה" והדבק לי בשיחה — לפי זה אבנה את מערכת המילים שלך. אחר-כך, כשתרגיש מוכן, עשה גם את הסימולציה המלאה (שלב ב').</p>
+    <div class="actions">
+      <button class="btn" onclick="copyVocab(this)">📋 העתק תוצאה</button>
+      <button class="btn ghost" onclick="intro()">חזרה לתפריט</button>
+    </div>
+  </div>`;
+}
+function copyVocab(btn){
+  const r=window._vresult;
+  const txt='תוצאת בדיקת אוצר מילים — '+new Date(r.date).toLocaleString('he-IL')+'\n'+
+    'רמת שליטה: '+r.masteredLevel+'/5 (נבדק עד רמה '+r.testedUpTo+')\n'+JSON.stringify(r);
+  const done=()=>{btn.textContent='✓ הועתק — הדבק בשיחה';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,()=>fallbackCopy(txt,done));
+  }else fallbackCopy(txt,done);
+}
+
+/* ============ שלב ב' — מסך הסבר לסימולציה ============ */
+function fullIntro(){
+  app.innerHTML=`
+  <div class="card">
+    <h1>סימולציית מבחן מלאה</h1>
+    <p class="sub">מדמה את המבנה האמיתי של המבחן · 6 פרקים · ~39 דקות</p>
+    <ul class="rules">
+      <li><b>3 פרקי השלמת משפטים</b> — 4 שאלות, 4 דקות לפרק</li>
+      <li><b>2 פרקי ניסוח מחדש</b> — 3 שאלות, 6 דקות לפרק</li>
+      <li><b>פרק הבנת הנקרא</b> — קטע + 5 שאלות, 15 דקות</li>
+    </ul>
+    <ul class="rules">
+      <li>המבחן <b>אדפטיבי</b> — הביצועים שלך קובעים את רמת הפרק הבא, כמו במבחן האמיתי</li>
+      <li>אי אפשר לחזור לשאלה קודמת — תשובה שאושרה ננעלת</li>
+      <li>כשנגמר הזמן, הפרק ננעל ועוברים הלאה. שאלה בלי תשובה = טעות</li>
+      <li>🚫 <b>בלי מילון, בלי תרגום, בלי עזרה</b> — המטרה למדוד את הרמה האמיתית שלך. אם תיעזר, האבחון יהיה שגוי וכל תוכנית הלימוד תיבנה לא נכון</li>
+      <li>שב במקום שקט עם 40 דקות פנויות. בהצלחה! 💪</li>
+    </ul>
+    <div class="actions">
+      <button class="btn" onclick="buildAndStart()">מתחילים</button>
+      <span class="note">הטיימר של הפרק הראשון יתחיל מיד</span>
+    </div>
+  </div>`;
+}
+
+/* ============ בניית פרקים (אדפטיבי) ============ */
+function buildAndStart(){
+  state.chapters=[
+    {skill:'sc',name:'השלמת משפטים · פרק 1',time:240,pick:()=>SC[state.scBand].map(q=>({...q,d:state.scBand}))},
+    {skill:'rs',name:'ניסוח מחדש · פרק 1',time:360,pick:()=>RS.M.slice()},
+    {skill:'sc',name:'השלמת משפטים · פרק 2',time:240,pick:()=>SC[state.scBand].map(q=>({...q,d:state.scBand}))},
+    {skill:'rc',name:'הבנת הנקרא',time:900,pick:pickPassage},
+    {skill:'rs',name:'ניסוח מחדש · פרק 2',time:360,pick:()=>state.rsCorrect>=2?RS.H.slice():RS.L.slice()},
+    {skill:'sc',name:'השלמת משפטים · פרק 3',time:240,pick:()=>SC[state.scBand].map(q=>({...q,d:state.scBand}))}
+  ];
+  document.getElementById('topbar').style.visibility='visible';
+  drawDots();
+  nextChapter();
+}
+function pickPassage(){
+  const acc=state.maxSeen>0?state.earned/state.maxSeen:0;
+  const p=acc>=0.6?READING.H:READING.M;
+  state.passage=p;
+  return p.qs.map(q=>({s:q.q,o:q.o,c:q.c,d:p.d,tag:q.tag}));
+}
+
+/* ============ ניהול פרק ============ */
+function nextChapter(){
+  if(state.timerId){clearInterval(state.timerId);state.timerId=null;}
+  state.chIdx++;
+  if(state.chIdx>=state.chapters.length){report();return;}
+  const ch=state.chapters[state.chIdx];
+  state.qs=ch.pick();
+  state.qIdx=0; state.chapterTotal=ch.time; state.remain=ch.time;
+  state.chCorrect=0;
+  drawDots();
+  startTimer();
+  renderQuestion();
+}
+function startTimer(){
+  updateTimer();
+  state.timerId=setInterval(()=>{
+    state.remain--;
+    updateTimer();
+    if(state.remain<=0){expireChapter();}
+  },1000);
+}
+function updateTimer(){
+  const t=document.getElementById('timer');
+  t.textContent=fmt(Math.max(0,state.remain));
+  t.classList.toggle('low',state.remain<=30);
+}
+function expireChapter(){
+  clearInterval(state.timerId);state.timerId=null;
+  // כל שאלה שלא נענתה — נרשמת כטעות
+  const ch=state.chapters[state.chIdx];
+  for(let i=state.qIdx;i<state.qs.length;i++){
+    logAnswer(ch,state.qs[i],false,0,false);
+  }
+  finishChapter(true);
+}
+function drawDots(){
+  const d=document.getElementById('dots');
+  d.innerHTML=state.chapters.map((_,i)=>
+    `<span class="${i<state.chIdx?'done':(i===state.chIdx?'now':'')}"></span>`).join('');
+}
+
+/* ============ הצגת שאלה ============ */
+function renderQuestion(){
+  const ch=state.chapters[state.chIdx];
+  const q=state.qs[state.qIdx];
+  state.selected=-1;
+  state.qStart=Date.now();
+  state.order=shuffle([0,1,2,3]);
+  document.getElementById('secName').textContent=ch.name;
+  document.getElementById('qCount').textContent='שאלה '+(state.qIdx+1)+' מתוך '+state.qs.length;
+
+  let stem='';
+  if(ch.skill==='sc'){
+    stem='<p class="sub">בחר את המילה שמשלימה את המשפט בצורה הטובה ביותר:</p>'+
+         '<div class="en">'+q.s.replace('___','<span class="blank">&nbsp;</span>')+'</div>';
+  }else if(ch.skill==='rs'){
+    stem='<p class="sub">בחר את המשפט הקרוב ביותר במשמעותו למשפט המקורי:</p>'+
+         '<div class="en">'+q.s+'</div>';
+  }else{
+    const p=state.passage;
+    stem=(state.qIdx===0?'<p class="sub">קרא את הקטע וענה על השאלות. הקטע יישאר מוצג לאורך כל הפרק.</p>':'')+
+      '<div class="passage"><h3>'+p.title+'</h3>'+p.text.split('\n\n').map(t=>'<p>'+t+'</p>').join('')+'</div>'+
+      '<div class="en"><b>'+(state.qIdx+1)+'.</b> '+q.s+'</div>';
+  }
+  app.innerHTML='<div class="card">'+stem+
+    '<div class="opts">'+state.order.map((oi,vi)=>
+      '<button type="button" class="opt" id="opt'+vi+'" onclick="pick('+vi+')">'+
+      '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+q.o[oi]+'</span></button>').join('')+
+    '</div><div class="actions"><button class="btn" id="okBtn" disabled onclick="confirmAnswer()">אישור והמשך</button>'+
+    '<span class="note">התשובה ננעלת — אין חזרה</span></div></div>';
+}
+function pick(vi){
+  state.selected=vi;
+  for(let i=0;i<4;i++)document.getElementById('opt'+i).classList.toggle('sel',i===vi);
+  document.getElementById('okBtn').disabled=false;
+}
+function confirmAnswer(){
+  const ch=state.chapters[state.chIdx];
+  const q=state.qs[state.qIdx];
+  const correct=state.order[state.selected]===q.c;
+  const ms=Date.now()-state.qStart;
+  logAnswer(ch,q,correct,ms,true);
+  if(correct)state.chCorrect++;
+  state.qIdx++;
+  if(state.qIdx>=state.qs.length)finishChapter(false);
+  else renderQuestion();
+}
+function logAnswer(ch,q,correct,ms,answered){
+  const w=weight(q.d);
+  state.maxSeen+=w;
+  if(correct)state.earned+=w;
+  state.log.push({skill:ch.skill,section:ch.name,d:q.d,layer:layerOf(q.d),
+    tag:q.tag||'',correct,timeMs:ms,answered});
+}
+function finishChapter(expired){
+  const ch=state.chapters[state.chIdx];
+  state.chTimes.push({name:ch.name,used:state.chapterTotal-Math.max(0,state.remain),
+    total:state.chapterTotal,expired});
+  // אדפטיביות
+  if(ch.skill==='sc')state.scBand=Math.min(5,Math.max(1,state.scBand+(state.chCorrect-2)));
+  if(ch.skill==='rs'&&ch.name.includes('פרק 1'))state.rsCorrect=state.chCorrect;
+  // מסך ביניים קצר
+  if(state.chIdx<state.chapters.length-1){
+    app.innerHTML='<div class="card" style="text-align:center"><h2>'+
+      (expired?'⏱ נגמר הזמן — הפרק ננעל':'הפרק הושלם')+'</h2>'+
+      '<p class="sub">הפרק הבא: '+state.chapters[state.chIdx+1].name+'</p>'+
+      '<button class="btn" onclick="nextChapter()">המשך לפרק הבא</button>'+
+      '<p class="note" style="margin-top:12px">במבחן האמיתי אין הפסקה — נסה לא להתעכב</p></div>';
+    document.getElementById('timer').textContent='--:--';
+    document.getElementById('timer').classList.remove('low');
+  }else nextChapter();
+}
+
+/* ============ דוח ============ */
+const HARD_MAX=142; // מסלול קשה מושלם: השלמות 76 + ניסוח 36 + קריאה 30
+function report(){
+  document.getElementById('topbar').style.visibility='hidden';
+  const score=Math.min(150,Math.max(50,Math.round(50+100*state.earned/HARD_MAX)));
+  const gap=134-score;
+
+  const bySkill={};
+  for(const skill of ['sc','rs','rc']){
+    const rows=state.log.filter(l=>l.skill===skill);
+    bySkill[skill]={total:rows.length,correct:rows.filter(l=>l.correct).length};
+  }
+  const byLayer={};
+  for(const layer of ['basic','mid','academic']){
+    const rows=state.log.filter(l=>l.skill==='sc'&&l.layer===layer);
+    if(rows.length)byLayer[layer]={total:rows.length,correct:rows.filter(l=>l.correct).length};
+  }
+  const unanswered=state.log.filter(l=>!l.answered).length;
+  const rushed=state.log.filter(l=>l.answered&&l.timeMs>0&&l.timeMs<6000&&!l.correct).length;
+
+  const skillRow=(k)=>{
+    const s=bySkill[k];if(!s.total)return '';
+    const pct=Math.round(100*s.correct/s.total);
+    const cls=pct>=75?'good':(pct>=50?'mid':'bad');
+    return '<tr><td>'+SKILL_NAMES[k]+'</td><td>'+s.correct+' / '+s.total+
+      '</td><td><span class="pill '+cls+'">'+pct+'%</span></td></tr>';
+  };
+  const layerNames={basic:'בסיס (רמת בגרות)',mid:'ביניים',academic:'אקדמית'};
+  const layerRow=(k)=>{
+    const s=byLayer[k];if(!s)return '';
+    const pct=Math.round(100*s.correct/s.total);
+    const cls=pct>=75?'good':(pct>=50?'mid':'bad');
+    return '<tr><td>'+layerNames[k]+'</td><td>'+s.correct+' / '+s.total+
+      '</td><td><span class="pill '+cls+'">'+pct+'%</span></td></tr>';
+  };
+  const timeRow=(t)=>'<tr><td>'+t.name+'</td><td>'+fmt(t.used)+' / '+fmt(t.total)+'</td><td>'+
+    (t.expired?'<span class="pill bad">נגמר הזמן</span>':'<span class="pill good">בזמן</span>')+'</td></tr>';
+
+  const result={date:new Date().toISOString(),score,
+    skills:bySkill,vocabLayers:byLayer,scFinalBand:state.scBand,
+    chapters:state.chTimes,unanswered,rushedWrong:rushed,
+    log:state.log.map(l=>({skill:l.skill,d:l.d,layer:l.layer,tag:l.tag,correct:l.correct,sec:Math.round(l.timeMs/1000)}))};
+  try{
+    const hist=JSON.parse(localStorage.getItem('amirnet_diag')||'[]');
+    hist.push(result);
+    localStorage.setItem('amirnet_diag',JSON.stringify(hist));
+  }catch(e){}
+  window._result=result;
+
+  app.innerHTML=`
+  <div class="card">
+    <div class="score-hero">
+      <div class="sub">ציון מוערך</div>
+      <div class="big">${score}</div>
+      <div class="range">בסולם 50–150 · פטור מ-134</div>
+      <div class="bar"><div class="fill" style="width:${(score-50)}%"></div><div class="mark" style="right:84%"></div></div>
+      <div class="bar-labels"><span>50</span><span>134 · פטור</span><span>150</span></div>
+      <p style="margin-top:14px">${gap>0
+        ?'חסרות <b>'+gap+' נקודות</b> לפטור — זה בדיוק מה שתוכנית הלימוד תסגור.'
+        :'🎉 מעל רף הפטור! נוודא שזה יציב עם סימולציות נוספות.'}</p>
+    </div>
+  </div>
+  <div class="card"><h2>פירוק לפי מיומנות</h2>
+    <table class="rep"><tr><th>מיומנות</th><th>נכונות</th><th>דיוק</th></tr>
+    ${skillRow('sc')}${skillRow('rs')}${skillRow('rc')}</table>
+  </div>
+  <div class="card"><h2>אוצר מילים — איפה מתחילות הטעויות</h2>
+    <p class="sub">לפי שכבת הקושי של המילים בשאלות ההשלמה שקיבלת (המבחן האדפטיבי הגיע עד רמה ${state.scBand} מתוך 5)</p>
+    <table class="rep"><tr><th>שכבה</th><th>נכונות</th><th>דיוק</th></tr>
+    ${layerRow('basic')}${layerRow('mid')}${layerRow('academic')}</table>
+  </div>
+  <div class="card"><h2>ניהול זמן</h2>
+    <table class="rep"><tr><th>פרק</th><th>זמן</th><th>מצב</th></tr>
+    ${state.chTimes.map(timeRow).join('')}</table>
+    ${unanswered?'<p class="sub" style="margin-top:10px">⚠️ '+unanswered+' שאלות נשארו ללא מענה בגלל הזמן — נעבוד על קצב.</p>':''}
+    ${rushed?'<p class="sub">⚠️ '+rushed+' טעויות בשאלות שנענו בפחות מ-6 שניות — כנראה ניחושים מהירים.</p>':''}
+  </div>
+  <div class="card">
+    <h2>מה עכשיו?</h2>
+    <p>לחץ על הכפתור, והדבק לי את התוצאה בשיחה — לפי זה אבנה את מערכת הלימוד המלאה שלך: אילו מילים ללמוד קודם, על מה לתרגל ובאיזה סדר.</p>
+    <div class="actions">
+      <button class="btn" onclick="copyResult(this)">📋 העתק תוצאה מלאה</button>
+      <button class="btn ghost" onclick="location.reload()">מבחן מחדש</button>
+    </div>
+    <div class="disclaimer">הציון הוא אומדן לצורך בניית תוכנית לימוד — לא ציון רשמי של המרכז הארצי לבחינות. המבחן האמיתי שואב ממאגר ענק ומכויל סטטיסטית.</div>
+  </div>`;
+}
+function copyResult(btn){
+  const r=window._result;
+  const txt='תוצאת אבחון אמירנט — '+new Date(r.date).toLocaleString('he-IL')+'\n'+
+    'ציון מוערך: '+r.score+' (פטור: 134)\n'+JSON.stringify(r);
+  const done=()=>{btn.textContent='✓ הועתק — הדבק בשיחה';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,()=>fallbackCopy(txt,done));
+  }else fallbackCopy(txt,done);
+}
+function fallbackCopy(txt,done,fail){
+  const ta=document.createElement('textarea');ta.value=txt;
+  document.body.appendChild(ta);ta.select();
+  try{if(document.execCommand('copy'))done();else if(fail)fail();}catch(e){if(fail)fail();}
+  document.body.removeChild(ta);
+}
+/* ============ מנה 1 — 200 מילים (pri = מתוצאות האבחון) ============ */
+const WORDS=[
+ // רמה 2 — בגרות (60)
+ {w:"answer",t:"תשובה; לענות",ex:"I don't know the answer.",lv:2,pri:1},
+ {w:"avoid",t:"להימנע מ-",ex:"Try to avoid mistakes.",lv:2,pri:1},
+ {w:"provide",t:"לספק",ex:"The hotel provides breakfast.",lv:2,pri:1},
+ {w:"require",t:"לדרוש",ex:"The job requires experience.",lv:2,pri:1},
+ {w:"encourage",t:"לעודד",ex:"Parents should encourage their children.",lv:2,pri:1},
+ {w:"decrease",t:"לרדת; להקטין",ex:"Prices decreased last month.",lv:2,pri:1},
+ {w:"ability",t:"יכולת",ex:"She has the ability to learn fast.",lv:2},
+ {w:"advantage",t:"יתרון",ex:"Being tall is an advantage in basketball.",lv:2},
+ {w:"advice",t:"עצה",ex:"He gave me good advice.",lv:2},
+ {w:"amount",t:"כמות",ex:"A large amount of money.",lv:2},
+ {w:"announce",t:"להכריז",ex:"They announced the winner.",lv:2},
+ {w:"annual",t:"שנתי",ex:"The annual meeting is in May.",lv:2},
+ {w:"appear",t:"להופיע; להיראות",ex:"Stars appear at night.",lv:2},
+ {w:"apply",t:"להגיש מועמדות; ליישם",ex:"You can apply for the job online.",lv:2},
+ {w:"approach",t:"גישה; להתקרב",ex:"We need a new approach to the problem.",lv:2},
+ {w:"argue",t:"להתווכח; לטעון",ex:"They argued about money.",lv:2},
+ {w:"arrange",t:"לארגן; לסדר",ex:"She arranged a meeting.",lv:2},
+ {w:"attempt",t:"ניסיון; לנסות",ex:"His first attempt failed.",lv:2},
+ {w:"attend",t:"להשתתף; לנכוח",ex:"All students must attend the lecture.",lv:2},
+ {w:"attitude",t:"גישה; יחס",ex:"He has a positive attitude.",lv:2},
+ {w:"attract",t:"למשוך",ex:"The museum attracts many visitors.",lv:2},
+ {w:"average",t:"ממוצע",ex:"The average age is 30.",lv:2},
+ {w:"aware",t:"מודע",ex:"She was not aware of the danger.",lv:2},
+ {w:"behavior",t:"התנהגות",ex:"The child's behavior improved.",lv:2},
+ {w:"belong",t:"להשתייך",ex:"This book belongs to me.",lv:2},
+ {w:"blame",t:"להאשים",ex:"Don't blame me for the mistake.",lv:2},
+ {w:"cause",t:"סיבה; לגרום",ex:"Smoking causes cancer.",lv:2},
+ {w:"certain",t:"בטוח; מסוים",ex:"I am certain he is right.",lv:2},
+ {w:"challenge",t:"אתגר",ex:"Learning English is a challenge.",lv:2},
+ {w:"community",t:"קהילה",ex:"He is respected in his community.",lv:2},
+ {w:"compare",t:"להשוות",ex:"Compare the two prices.",lv:2},
+ {w:"complain",t:"להתלונן",ex:"She complained about the noise.",lv:2},
+ {w:"complete",t:"להשלים; שלם",ex:"Complete the form.",lv:2},
+ {w:"condition",t:"מצב; תנאי",ex:"The car is in good condition.",lv:2},
+ {w:"consider",t:"לשקול",ex:"Consider all the options.",lv:2},
+ {w:"contain",t:"להכיל",ex:"This drink contains sugar.",lv:2},
+ {w:"convince",t:"לשכנע",ex:"He convinced me to stay.",lv:2},
+ {w:"create",t:"ליצור",ex:"The project created new jobs.",lv:2},
+ {w:"damage",t:"נזק; להזיק",ex:"The storm caused great damage.",lv:2},
+ {w:"decision",t:"החלטה",ex:"It was a difficult decision.",lv:2},
+ {w:"defend",t:"להגן",ex:"He defended his opinion.",lv:2},
+ {w:"delay",t:"עיכוב; לדחות",ex:"The flight was delayed.",lv:2},
+ {w:"demand",t:"דרישה; לדרוש",ex:"Workers demand higher pay.",lv:2},
+ {w:"deny",t:"להכחיש",ex:"He denied taking the money.",lv:2},
+ {w:"depend",t:"להיות תלוי ב-",ex:"It depends on the weather.",lv:2},
+ {w:"describe",t:"לתאר",ex:"Describe the man you saw.",lv:2},
+ {w:"deserve",t:"להיות ראוי ל-",ex:"You deserve a break.",lv:2},
+ {w:"destroy",t:"להרוס",ex:"Fire destroyed the building.",lv:2},
+ {w:"develop",t:"לפתח",ex:"The company developed a new app.",lv:2},
+ {w:"doubt",t:"ספק",ex:"There is no doubt he is talented.",lv:2},
+ {w:"earn",t:"להרוויח",ex:"She earns a good salary.",lv:2},
+ {w:"effect",t:"השפעה; תוצאה",ex:"The medicine had no effect.",lv:2},
+ {w:"effort",t:"מאמץ",ex:"Success requires effort.",lv:2},
+ {w:"employ",t:"להעסיק",ex:"The factory employs 200 workers.",lv:2},
+ {w:"exist",t:"להתקיים",ex:"Do aliens exist?",lv:2},
+ {w:"expect",t:"לצפות ל-",ex:"We expect rain tomorrow.",lv:2},
+ {w:"experience",t:"ניסיון; חוויה",ex:"She has years of experience.",lv:2},
+ {w:"explain",t:"להסביר",ex:"Can you explain this word?",lv:2},
+ {w:"familiar",t:"מוכר",ex:"His face looks familiar.",lv:2},
+ {w:"favor",t:"טובה; לתמוך ב-",ex:"Can you do me a favor?",lv:2},
+ // רמה 3 — בגרות 5 יח' / מתקדם (70)
+ {w:"essential",t:"חיוני",ex:"Water is essential for life.",lv:3,pri:1},
+ {w:"significant",t:"משמעותי",ex:"A significant improvement.",lv:3,pri:1},
+ {w:"obtain",t:"להשיג",ex:"He obtained a driving license.",lv:3,pri:1},
+ {w:"maintain",t:"לתחזק; לשמר",ex:"It costs a lot to maintain a car.",lv:3,pri:1},
+ {w:"purpose",t:"מטרה",ex:"The purpose of the meeting is clear.",lv:3,pri:1},
+ {w:"reduce",t:"להפחית",ex:"Reduce your speed near schools.",lv:3,pri:1},
+ {w:"accurate",t:"מדויק",ex:"The report was accurate.",lv:3,pri:1},
+ {w:"prohibit",t:"לאסור",ex:"Smoking is prohibited here.",lv:3,pri:1},
+ {w:"abandon",t:"לנטוש",ex:"They abandoned the old house.",lv:3},
+ {w:"absorb",t:"לספוג",ex:"Plants absorb water.",lv:3},
+ {w:"access",t:"גישה",ex:"Students have access to the library.",lv:3},
+ {w:"accompany",t:"להתלוות",ex:"He accompanied her home.",lv:3},
+ {w:"accomplish",t:"להשלים; להגשים",ex:"She accomplished her goal.",lv:3},
+ {w:"accuse",t:"להאשים",ex:"He was accused of theft.",lv:3},
+ {w:"adapt",t:"להסתגל",ex:"Animals adapt to their environment.",lv:3},
+ {w:"adequate",t:"מספק; הולם",ex:"An adequate salary.",lv:3},
+ {w:"admit",t:"להודות",ex:"He admitted his mistake.",lv:3},
+ {w:"adopt",t:"לאמץ",ex:"The company adopted a new policy.",lv:3},
+ {w:"alter",t:"לשנות",ex:"They altered the plan.",lv:3},
+ {w:"ambition",t:"שאיפה",ex:"Her ambition is to be a doctor.",lv:3},
+ {w:"analyze",t:"לנתח",ex:"Analyze the results carefully.",lv:3},
+ {w:"ancient",t:"עתיק",ex:"Ancient Rome was powerful.",lv:3},
+ {w:"anticipate",t:"לצפות מראש",ex:"We anticipate problems.",lv:3},
+ {w:"apparent",t:"ברור; נראה לעין",ex:"The reason was apparent.",lv:3},
+ {w:"appreciate",t:"להעריך",ex:"I appreciate your help.",lv:3},
+ {w:"approve",t:"לאשר",ex:"The board approved the plan.",lv:3},
+ {w:"assess",t:"להעריך; לאמוד",ex:"Assess the damage.",lv:3},
+ {w:"assign",t:"להקצות; להטיל",ex:"The teacher assigned homework.",lv:3},
+ {w:"assist",t:"לסייע",ex:"He assisted the police.",lv:3},
+ {w:"assume",t:"להניח",ex:"I assume you are right.",lv:3},
+ {w:"assure",t:"להבטיח",ex:"I assure you it is safe.",lv:3},
+ {w:"attain",t:"להשיג; להגיע ל-",ex:"She attained a high rank.",lv:3},
+ {w:"available",t:"זמין",ex:"The doctor is available today.",lv:3},
+ {w:"barrier",t:"מחסום",ex:"A language barrier.",lv:3},
+ {w:"bias",t:"הטיה; דעה קדומה",ex:"The judge showed no bias.",lv:3},
+ {w:"brief",t:"קצר",ex:"A brief meeting.",lv:3},
+ {w:"capable",t:"מסוגל",ex:"She is capable of great things.",lv:3},
+ {w:"cautious",t:"זהיר",ex:"Be cautious when driving at night.",lv:3},
+ {w:"cease",t:"לחדול",ex:"The company ceased operations.",lv:3},
+ {w:"commit",t:"לבצע; להתחייב",ex:"He committed a serious crime.",lv:3},
+ {w:"compensate",t:"לפצות",ex:"They compensated the workers.",lv:3},
+ {w:"competent",t:"מוכשר; כשיר",ex:"A competent manager.",lv:3},
+ {w:"comprehend",t:"להבין",ex:"The idea is hard to comprehend.",lv:3},
+ {w:"conclude",t:"להסיק; לסיים",ex:"The study concluded that sleep matters.",lv:3},
+ {w:"conduct",t:"לנהל; לערוך",ex:"They conducted an experiment.",lv:3},
+ {w:"confess",t:"להתוודות",ex:"He confessed to the crime.",lv:3},
+ {w:"confidence",t:"ביטחון",ex:"Speak with confidence.",lv:3},
+ {w:"conflict",t:"סכסוך; עימות",ex:"A conflict between neighbors.",lv:3},
+ {w:"consequence",t:"תוצאה",ex:"Actions have consequences.",lv:3},
+ {w:"considerable",t:"ניכר; משמעותי",ex:"A considerable amount of time.",lv:3},
+ {w:"consist",t:"להיות מורכב מ-",ex:"The test consists of three parts.",lv:3},
+ {w:"constant",t:"קבוע; מתמיד",ex:"Constant noise from the street.",lv:3},
+ {w:"consume",t:"לצרוך",ex:"Cars consume fuel.",lv:3},
+ {w:"contribute",t:"לתרום",ex:"Everyone contributed money.",lv:3},
+ {w:"convert",t:"להמיר; להפוך",ex:"Convert dollars to shekels.",lv:3},
+ {w:"cope",t:"להתמודד",ex:"She copes well with stress.",lv:3},
+ {w:"crucial",t:"מכריע; קריטי",ex:"A crucial decision.",lv:3},
+ {w:"decline",t:"ירידה; לסרב",ex:"A decline in sales.",lv:3},
+ {w:"dedicate",t:"להקדיש",ex:"He dedicated his life to science.",lv:3},
+ {w:"demonstrate",t:"להדגים; להוכיח",ex:"The study demonstrates the danger.",lv:3},
+ {w:"dense",t:"צפוף; דחוס",ex:"A dense forest.",lv:3},
+ {w:"deprive",t:"לשלול; למנוע מ-",ex:"Don't deprive children of sleep.",lv:3},
+ {w:"derive",t:"לנבוע; להפיק",ex:"The word derives from Latin.",lv:3},
+ {w:"detect",t:"לגלות; לאתר",ex:"The test detects the disease early.",lv:3},
+ {w:"determine",t:"לקבוע",ex:"The test determines your level.",lv:3},
+ {w:"devote",t:"להקדיש",ex:"She devotes time to her family.",lv:3},
+ {w:"distinct",t:"נבדל; מובחן",ex:"Two distinct languages.",lv:3},
+ {w:"distribute",t:"לחלק; להפיץ",ex:"They distributed food to the poor.",lv:3},
+ {w:"diverse",t:"מגוון",ex:"A diverse population.",lv:3},
+ {w:"dominant",t:"שולט; דומיננטי",ex:"The dominant language in science.",lv:3},
+ // רמה 4 — אקדמי בסיסי (50)
+ {w:"acquire",t:"לרכוש",ex:"She acquired new skills.",lv:4},
+ {w:"adverse",t:"שלילי; מזיק",ex:"Adverse effects of the drug.",lv:4},
+ {w:"advocate",t:"לתמוך ב-; חסיד של",ex:"He advocates free education.",lv:4},
+ {w:"allege",t:"לטעון (ללא הוכחה)",ex:"He allegedly stole the car.",lv:4},
+ {w:"ambiguous",t:"דו-משמעי",ex:"An ambiguous answer.",lv:4},
+ {w:"apprehend",t:"לעצור; לתפוס",ex:"Police apprehended the suspect.",lv:4},
+ {w:"arbitrary",t:"שרירותי",ex:"An arbitrary decision.",lv:4},
+ {w:"articulate",t:"להביע בבהירות",ex:"She articulated her ideas well.",lv:4},
+ {w:"ascend",t:"לעלות; לטפס",ex:"The plane ascended quickly.",lv:4},
+ {w:"assert",t:"לטעון בתוקף",ex:"He asserted his innocence.",lv:4},
+ {w:"attribute",t:"לייחס ל-",ex:"They attribute the success to luck.",lv:4},
+ {w:"coerce",t:"לכפות; לאלץ",ex:"They were coerced into signing.",lv:4},
+ {w:"compel",t:"לאלץ",ex:"The law compels employers to pay.",lv:4},
+ {w:"comprise",t:"לכלול; להיות מורכב מ-",ex:"The committee comprises five members.",lv:4},
+ {w:"conceive",t:"להגות; לתפוס בדמיון",ex:"It is hard to conceive of life without phones.",lv:4},
+ {w:"concur",t:"להסכים",ex:"The experts concur on this point.",lv:4},
+ {w:"condemn",t:"לגנות",ex:"Leaders condemned the attack.",lv:4},
+ {w:"confine",t:"להגביל; לכלוא",ex:"He was confined to bed.",lv:4},
+ {w:"consent",t:"הסכמה",ex:"Written consent is required.",lv:4},
+ {w:"contempt",t:"בוז",ex:"He showed contempt for the rules.",lv:4},
+ {w:"contend",t:"לטעון",ex:"Critics contend the law is unfair.",lv:4},
+ {w:"curb",t:"לרסן; לבלום",ex:"Measures to curb inflation.",lv:4},
+ {w:"deceive",t:"להונות; לרמות",ex:"He deceived his customers.",lv:4},
+ {w:"deduce",t:"להסיק",ex:"We deduced the answer from the facts.",lv:4},
+ {w:"defer",t:"לדחות",ex:"They deferred the decision.",lv:4},
+ {w:"deficient",t:"לוקה בחסר",ex:"A diet deficient in iron.",lv:4},
+ {w:"degrade",t:"להשפיל; לפגוע ב-",ex:"Such words degrade people.",lv:4},
+ {w:"deter",t:"להרתיע",ex:"Cameras deter thieves.",lv:4},
+ {w:"detrimental",t:"מזיק",ex:"Detrimental to your health.",lv:4},
+ {w:"devise",t:"לתכנן; להמציא",ex:"They devised a new method.",lv:4},
+ {w:"dispute",t:"מחלוקת; סכסוך",ex:"A legal dispute over land.",lv:4},
+ {w:"divert",t:"להסיט",ex:"Traffic was diverted to another road.",lv:4},
+ {w:"dwell",t:"להתגורר; להתעכב על",ex:"He dwells on past mistakes.",lv:4},
+ {w:"elicit",t:"לעורר; לחלץ (תגובה)",ex:"The joke elicited laughter.",lv:4},
+ {w:"endorse",t:"לתמוך; לאשר",ex:"The senator endorsed the candidate.",lv:4},
+ {w:"enhance",t:"לשפר; להעצים",ex:"Exercise enhances mood.",lv:4},
+ {w:"evoke",t:"לעורר (רגש/זיכרון)",ex:"The song evokes memories.",lv:4},
+ {w:"exert",t:"להפעיל (כוח/לחץ)",ex:"He exerted pressure on them.",lv:4},
+ {w:"exploit",t:"לנצל",ex:"They exploited the workers.",lv:4},
+ {w:"facilitate",t:"להקל; לאפשר",ex:"Technology facilitates learning.",lv:4},
+ {w:"foster",t:"לטפח",ex:"Reading fosters imagination.",lv:4},
+ {w:"hinder",t:"להפריע; לעכב",ex:"Rain hindered the rescue.",lv:4},
+ {w:"impose",t:"לכפות; להטיל",ex:"The court imposed a fine.",lv:4},
+ {w:"incentive",t:"תמריץ",ex:"A tax incentive for small businesses.",lv:4},
+ {w:"inevitable",t:"בלתי נמנע",ex:"Change is inevitable.",lv:4},
+ {w:"inhibit",t:"לעכב; לדכא",ex:"Fear inhibits learning.",lv:4},
+ {w:"notion",t:"מושג; רעיון",ex:"The notion of free will.",lv:4},
+ {w:"plausible",t:"סביר; מתקבל על הדעת",ex:"A plausible explanation.",lv:4},
+ {w:"prevail",t:"לגבור; לשרור",ex:"Justice prevailed in the end.",lv:4},
+ {w:"undermine",t:"לחתור תחת; להחליש",ex:"Rumors undermined his authority.",lv:4},
+ // רמה 5 — אקדמי גבוה (20)
+ {w:"alleviate",t:"להקל; לשכך",ex:"Drugs alleviate pain.",lv:5},
+ {w:"clandestine",t:"חשאי",ex:"A clandestine meeting.",lv:5},
+ {w:"cogent",t:"משכנע",ex:"A cogent argument.",lv:5},
+ {w:"devoid",t:"נטול; חסר",ex:"Devoid of meaning.",lv:5},
+ {w:"efficacious",t:"יעיל",ex:"An efficacious treatment.",lv:5},
+ {w:"exacerbate",t:"להחמיר",ex:"Stress exacerbates illness.",lv:5},
+ {w:"innocuous",t:"לא מזיק; תמים",ex:"An innocuous remark.",lv:5},
+ {w:"meticulous",t:"קפדני",ex:"He keeps meticulous records.",lv:5},
+ {w:"obsolete",t:"מיושן",ex:"Obsolete technology.",lv:5},
+ {w:"pervasive",t:"חודר לכל; נפוץ",ex:"Pervasive corruption.",lv:5},
+ {w:"replete",t:"גדוש; מלא",ex:"Replete with errors.",lv:5},
+ {w:"scathing",t:"נוקב; צורב",ex:"A scathing review.",lv:5},
+ {w:"scrutinize",t:"לבחון בקפידה",ex:"Scrutinize the contract.",lv:5},
+ {w:"tenuous",t:"רופף; חלש",ex:"A tenuous connection.",lv:5},
+ {w:"ubiquitous",t:"נמצא בכל מקום",ex:"Phones are ubiquitous.",lv:5},
+ {w:"venerate",t:"להעריץ",ex:"They venerate their ancestors.",lv:5},
+ {w:"vindicate",t:"לטהר מאשמה",ex:"The evidence vindicated him.",lv:5},
+ {w:"volatile",t:"הפכפך; נפיץ",ex:"A volatile market.",lv:5},
+ {w:"wane",t:"לדעוך",ex:"His influence waned over time.",lv:5},
+ {w:"zealous",t:"נלהב; קנאי",ex:"A zealous supporter.",lv:5},
+ /* ===== מנה 2 (2.8) — מבוסס מחקר: בחינות רשמיות של נית"ב + הצלבת מכונים =====
+    pri:3 = מילות קישור (קונצנזוס כל המקורות — ללמוד ראשונות)
+    pri:2 = הופיעו כתשובות נכונות בבחינות נית"ב · pri:1 = מגוף השאלות הרשמיות */
+ // מילות קישור (31)
+ {w:"although",t:"אף על פי ש-; למרות ש-",ex:"Although it rained, we went out.",lv:2,pri:3},
+ {w:"even though",t:"אף על פי ש-; למרות ש-",ex:"He came even though he was sick.",lv:2,pri:3},
+ {w:"though",t:"אף על פי ש-; עם זאת",ex:"Though small, the car is fast.",lv:2,pri:3},
+ {w:"despite",t:"למרות",ex:"Despite the rain, we went out.",lv:2,pri:3},
+ {w:"in spite of",t:"למרות",ex:"In spite of the noise, she slept.",lv:2,pri:3},
+ {w:"whereas",t:"בעוד ש-; ואילו",ex:"He is tall, whereas his brother is short.",lv:3,pri:3},
+ {w:"while",t:"בזמן ש-; ואילו",ex:"While some agree, others do not.",lv:2,pri:3},
+ {w:"yet",t:"ובכל זאת; עדיין",ex:"It is simple, yet effective.",lv:2,pri:3},
+ {w:"however",t:"אולם; עם זאת",ex:"The plan failed. However, we learned a lot.",lv:2,pri:3},
+ {w:"nevertheless",t:"אולם; עם זאת",ex:"It was risky; nevertheless, they tried.",lv:3,pri:3},
+ {w:"unless",t:"אלא אם כן",ex:"We will go unless it rains.",lv:2,pri:3},
+ {w:"provided that",t:"בתנאי ש-",ex:"You may enter provided that you pay.",lv:3,pri:3},
+ {w:"since",t:"מכיוון ש-; מאז",ex:"Since it was late, we left.",lv:2,pri:3},
+ {w:"due to",t:"בגלל; עקב",ex:"The delay was due to bad weather.",lv:2,pri:3},
+ {w:"owing to",t:"בגלל; עקב",ex:"Owing to the strike, flights were cancelled.",lv:3,pri:3},
+ {w:"therefore",t:"לכן; כתוצאה מכך",ex:"He was ill; therefore, he stayed home.",lv:2,pri:3},
+ {w:"thus",t:"לכן; כתוצאה מכך",ex:"Prices rose; thus, sales fell.",lv:3,pri:3},
+ {w:"consequently",t:"לכן; כתוצאה מכך",ex:"He missed the bus; consequently, he was late.",lv:3,pri:3},
+ {w:"as a result",t:"לכן; כתוצאה מכך",ex:"As a result of the storm, schools closed.",lv:2,pri:3},
+ {w:"moreover",t:"בנוסף; יתרה מכך",ex:"Aspirin is effective; moreover, it is cheap.",lv:3,pri:3},
+ {w:"furthermore",t:"בנוסף; יתרה מכך",ex:"Furthermore, the plan saves money.",lv:3,pri:3},
+ {w:"in addition",t:"בנוסף; יתרה מכך",ex:"In addition, students get a discount.",lv:2,pri:3},
+ {w:"aside from",t:"מלבד; בנוסף ל-",ex:"Aside from love, parenting involves duties.",lv:3,pri:3},
+ {w:"irrespective of",t:"ללא קשר ל-",ex:"Everyone pays, irrespective of age.",lv:4,pri:3},
+ {w:"regardless of",t:"ללא קשר ל-",ex:"Regardless of the cost, we will do it.",lv:3,pri:3},
+ {w:"whether... or",t:"בין אם... ובין אם",ex:"Whether you like it or not, it happens.",lv:2,pri:3},
+ {w:"so... that",t:"כל כך... עד ש-",ex:"It was so cold that the lake froze.",lv:2,pri:3},
+ {w:"both... and",t:"גם... וגם",ex:"Both students and teachers agreed.",lv:2,pri:3},
+ {w:"not only... but also",t:"לא רק... אלא גם",ex:"Not only cheap but also fast.",lv:3,pri:3},
+ {w:"only if",t:"רק אם",ex:"You pass only if you study.",lv:2,pri:3},
+ {w:"as",t:"מכיוון ש-; כאשר; בתור",ex:"As it was late, we left.",lv:2,pri:3},
+ // הופיעו כתשובות נכונות בבחינות נית"ב (21)
+ {w:"fortune",t:"הון; מזל",ex:"He amassed a great fortune.",lv:3,pri:2},
+ {w:"characteristic",t:"מאפיין; תכונה",ex:"Each species has unique characteristics.",lv:3,pri:2},
+ {w:"clarify",t:"להבהיר",ex:"Can you clarify this point?",lv:3,pri:2},
+ {w:"prolonged",t:"ממושך",ex:"Prolonged exposure may cause damage.",lv:3,pri:2},
+ {w:"unrest",t:"אי-שקט; תסיסה",ex:"Political unrest in the region.",lv:4,pri:2},
+ {w:"depict",t:"לתאר; להציג",ex:"The painting depicts a battle.",lv:4,pri:2},
+ {w:"reservation",t:"הסתייגות; הזמנה מראש",ex:"I have reservations about the plan.",lv:3,pri:2},
+ {w:"source",t:"מקור",ex:"The source of the river.",lv:2,pri:2},
+ {w:"beyond",t:"מעבר ל-",ex:"Some patients are beyond help.",lv:2,pri:2},
+ {w:"entirely",t:"לחלוטין",ex:"That is entirely different.",lv:2,pri:2},
+ {w:"shrink",t:"להתכווץ",ex:"The sweater shrank in the wash.",lv:3,pri:2},
+ {w:"upbringing",t:"חינוך (בבית)",ex:"She had a strict upbringing.",lv:4,pri:2},
+ {w:"remote",t:"מרוחק; קלוש",ex:"The chances of success are remote.",lv:3,pri:2},
+ {w:"thorough",t:"יסודי; מעמיק",ex:"A thorough investigation.",lv:3,pri:2},
+ {w:"device",t:"מכשיר; אמצעי",ex:"The abacus is a counting device.",lv:2,pri:2},
+ {w:"phrase",t:"ביטוי; ניסוח",ex:"A common English phrase.",lv:2,pri:2},
+ {w:"income",t:"הכנסה",ex:"A steady income.",lv:2,pri:2},
+ {w:"era",t:"עידן; תקופה",ex:"The digital era.",lv:3,pri:2},
+ {w:"absence",t:"היעדרות; היעדר",ex:"In the absence of evidence.",lv:3,pri:2},
+ {w:"scarce",t:"נדיר; מצומצם",ex:"Living space is scarce in Japan.",lv:3,pri:2},
+ {w:"voice",t:"להביע; קול",ex:"They voiced their disapproval.",lv:3,pri:2},
+ // מגוף השאלות הרשמיות (67)
+ {w:"relevant",t:"רלוונטי; שייך לעניין",ex:"The evidence is not relevant.",lv:3,pri:1},
+ {w:"refuse",t:"לסרב",ex:"The judge refused to allow it.",lv:2,pri:1},
+ {w:"amass",t:"לצבור",ex:"He amassed great wealth.",lv:4,pri:1},
+ {w:"wealthy",t:"עשיר",ex:"A wealthy businessman.",lv:2,pri:1},
+ {w:"exposure",t:"חשיפה",ex:"Exposure to the sun.",lv:3,pri:1},
+ {w:"harmful",t:"מזיק",ex:"Harmful substances in the air.",lv:2,pri:1},
+ {w:"substance",t:"חומר",ex:"A dangerous substance.",lv:3,pri:1},
+ {w:"permanent",t:"קבוע; תמידי",ex:"Permanent damage to the lungs.",lv:3,pri:1},
+ {w:"occasionally",t:"מדי פעם",ex:"We occasionally meet for coffee.",lv:3,pri:1},
+ {w:"branch",t:"סניף; ענף",ex:"The bank closed a branch.",lv:2,pri:1},
+ {w:"widespread",t:"נפוץ; נרחב",ex:"Widespread public support.",lv:3,pri:1},
+ {w:"launch",t:"להשיק; לשגר",ex:"They launched a new product.",lv:3,pri:1},
+ {w:"manufacture",t:"לייצר",ex:"The factory manufactures cars.",lv:3,pri:1},
+ {w:"principal",t:"עיקרי; ראשי",ex:"The principal reason for the change.",lv:3,pri:1},
+ {w:"cognitive",t:"שכלי; קוגניטיבי",ex:"Cognitive abilities develop with age.",lv:4,pri:1},
+ {w:"regime",t:"משטר",ex:"A tyrannical regime.",lv:3,pri:1},
+ {w:"disapproval",t:"אי-הסכמה; הסתייגות",ex:"He showed his disapproval.",lv:3,pri:1},
+ {w:"domestic",t:"ביתי; מקומי; פנים-מדינתי",ex:"Domestic policy issues.",lv:3,pri:1},
+ {w:"policy",t:"מדיניות; פוליסה",ex:"The company changed its policy.",lv:2,pri:1},
+ {w:"reform",t:"רפורמה; לתקן",ex:"Economic reforms were introduced.",lv:3,pri:1},
+ {w:"complex",t:"מורכב",ex:"A complex problem.",lv:2,pri:1},
+ {w:"technique",t:"טכניקה; שיטה",ex:"A new surgical technique.",lv:2,pri:1},
+ {w:"sole",t:"יחיד; בלעדי",ex:"The sole planner of the project.",lv:3,pri:1},
+ {w:"prominent",t:"בולט; ידוע",ex:"A prominent scientist.",lv:4,pri:1},
+ {w:"persist",t:"להתמיד; להימשך",ex:"The problem persists.",lv:3,pri:1},
+ {w:"superior",t:"עדיף; עליון",ex:"A superior explanation.",lv:3,pri:1},
+ {w:"presume",t:"להניח",ex:"He is presumed innocent.",lv:4,pri:1},
+ {w:"phenomenon",t:"תופעה",ex:"A natural phenomenon.",lv:3,pri:1},
+ {w:"coin",t:"לטבוע (מונח); מטבע",ex:"The term was coined in 1852.",lv:4,pri:1},
+ {w:"pollute",t:"לזהם",ex:"Factories pollute the air.",lv:2,pri:1},
+ {w:"appeal",t:"למשוך; לפנות; ערעור",ex:"The idea appeals to young people.",lv:3,pri:1},
+ {w:"mainstay",t:"עמוד התווך",ex:"Agriculture is the mainstay of the economy.",lv:4,pri:1},
+ {w:"agriculture",t:"חקלאות",ex:"Modern agriculture uses technology.",lv:2,pri:1},
+ {w:"vital",t:"חיוני",ex:"Farming is vital to the economy.",lv:3,pri:1},
+ {w:"fraction",t:"שבריר; חלק קטן",ex:"A fraction of the cost.",lv:3,pri:1},
+ {w:"dwindle",t:"להתמעט",ex:"Supplies dwindled quickly.",lv:4,pri:1},
+ {w:"perpetrate",t:"לבצע (פשע)",ex:"The crime was perpetrated at night.",lv:4,pri:1},
+ {w:"constitute",t:"להוות",ex:"Women constitute half the workforce.",lv:4,pri:1},
+ {w:"innate",t:"מולד",ex:"An innate talent for music.",lv:4,pri:1},
+ {w:"merely",t:"רק; בסך הכל",ex:"It is merely a suggestion.",lv:3,pri:1},
+ {w:"eventually",t:"בסופו של דבר",ex:"Eventually he agreed.",lv:2,pri:1},
+ {w:"credit",t:"לזקוף לזכות; אשראי",ex:"She is credited with the discovery.",lv:3,pri:1},
+ {w:"generate",t:"לייצר; להפיק",ex:"Tourism generates revenue.",lv:3,pri:1},
+ {w:"revenue",t:"הכנסות",ex:"Government revenue from taxes.",lv:4,pri:1},
+ {w:"affluent",t:"אמיד; עשיר",ex:"An affluent neighborhood.",lv:4,pri:1},
+ {w:"enable",t:"לאפשר",ex:"The app enables fast payment.",lv:2,pri:1},
+ {w:"impact",t:"השפעה",ex:"A major impact on health.",lv:2,pri:1},
+ {w:"native",t:"יליד; מקומי",ex:"A native speaker of Hebrew.",lv:3,pri:1},
+ {w:"entrepreneur",t:"יזם",ex:"A successful entrepreneur.",lv:3,pri:1},
+ {w:"expense",t:"הוצאה",ex:"At great expense.",lv:2,pri:1},
+ {w:"necessity",t:"הכרח; צורך",ex:"Water is a basic necessity.",lv:3,pri:1},
+ {w:"preserve",t:"לשמר",ex:"Preserve the old traditions.",lv:3,pri:1},
+ {w:"precaution",t:"אמצעי זהירות",ex:"Take precautions against fire.",lv:3,pri:1},
+ {w:"discard",t:"להשליך; לזרוק",ex:"Discard old files.",lv:4,pri:1},
+ {w:"profitable",t:"רווחי",ex:"A profitable business.",lv:2,pri:1},
+ {w:"glimpse",t:"הצצה",ex:"A glimpse of the future.",lv:4,pri:1},
+ {w:"origin",t:"מקור; מוצא",ex:"The origin of the word.",lv:2,pri:1},
+ {w:"literal",t:"מילולי",ex:"The literal meaning of the phrase.",lv:3,pri:1},
+ {w:"supervise",t:"לפקח",ex:"Supervise the children closely.",lv:3,pri:1},
+ {w:"spontaneous",t:"ספונטני",ex:"A spontaneous decision.",lv:3,pri:1},
+ {w:"wander",t:"לשוטט; לנדוד",ex:"His mind wandered during class.",lv:3,pri:1},
+ {w:"interrupt",t:"להפריע; לקטוע",ex:"Don't interrupt the lesson.",lv:2,pri:1},
+ {w:"involve",t:"לכלול; לערב",ex:"The job involves travel.",lv:2,pri:1},
+ {w:"embarrass",t:"להביך",ex:"The question embarrassed him.",lv:2,pri:1},
+ {w:"proportion",t:"יחס; שיעור",ex:"A large proportion of students.",lv:3,pri:1},
+ {w:"remarkable",t:"יוצא דופן; מרשים",ex:"A remarkable achievement.",lv:3,pri:1},
+ {w:"explore",t:"לחקור",ex:"Explore new ideas.",lv:2,pri:1},
+ // מסיחים מהבחינות הרשמיות + הצלבת מכונים (66)
+ {w:"restrict",t:"להגביל",ex:"Restrict the use of phones.",lv:3},
+ {w:"pardon",t:"לחון; סליחה",ex:"The president pardoned him.",lv:4},
+ {w:"originate",t:"לנבוע; להתחיל מ-",ex:"The custom originated in China.",lv:4},
+ {w:"eliminate",t:"לחסל; לבטל",ex:"Eliminate unnecessary mistakes.",lv:3},
+ {w:"resent",t:"להתרעם על",ex:"He resented the criticism.",lv:4},
+ {w:"restrain",t:"לעצור בכוח; להבליג",ex:"Restrain your anger.",lv:4},
+ {w:"synthetic",t:"סינתטי; מלאכותי",ex:"Synthetic materials.",lv:3},
+ {w:"appropriate",t:"מתאים; הולם",ex:"Appropriate clothing for work.",lv:3},
+ {w:"classify",t:"לסווג",ex:"Classify the documents by date.",lv:3},
+ {w:"modest",t:"צנוע",ex:"A modest salary.",lv:3},
+ {w:"identity",t:"זהות",ex:"A case of mistaken identity.",lv:2},
+ {w:"appearance",t:"מראה; הופעה",ex:"Don't judge by appearance.",lv:2},
+ {w:"hazard",t:"סכנה; מפגע",ex:"A fire hazard.",lv:3},
+ {w:"outlet",t:"פתח; אפיק; חנות מפעל",ex:"Sport is an outlet for his energy.",lv:4},
+ {w:"collide",t:"להתנגש",ex:"The two cars collided.",lv:3},
+ {w:"descend",t:"לרדת; להיות צאצא של",ex:"Birds descend from dinosaurs.",lv:3},
+ {w:"definite",t:"מוגדר; ברור",ex:"A definite answer.",lv:3},
+ {w:"satisfy",t:"לספק; להשביע רצון",ex:"Satisfy the requirements.",lv:2},
+ {w:"exception",t:"יוצא מן הכלל",ex:"An exception to the rule.",lv:3},
+ {w:"release",t:"לשחרר; להוציא",ex:"Release the annual report.",lv:2},
+ {w:"exchange",t:"להחליף; חילופין",ex:"Exchange ideas with colleagues.",lv:2},
+ {w:"property",t:"רכוש; תכונה",ex:"Private property.",lv:3},
+ {w:"relative",t:"יחסי; קרוב משפחה",ex:"Relative safety.",lv:3},
+ {w:"frequent",t:"תכוף",ex:"Frequent visits to the doctor.",lv:3},
+ {w:"rapid",t:"מהיר",ex:"Rapid economic growth.",lv:2},
+ {w:"resume",t:"לחדש; להמשיך",ex:"Talks resumed after the break.",lv:4},
+ {w:"coincide",t:"לחפוף; להתרחש יחד",ex:"The two events coincided.",lv:4},
+ {w:"improvise",t:"לאלתר",ex:"The actor improvised his lines.",lv:3},
+ {w:"oversight",t:"השמטה; פיקוח",ex:"A minor oversight in the report.",lv:4},
+ {w:"trade",t:"סחר; מקצוע",ex:"International trade agreements.",lv:2},
+ {w:"secure",t:"בטוח; להבטיח",ex:"A secure job.",lv:3},
+ {w:"rebellious",t:"מרדני",ex:"A rebellious teenager.",lv:3},
+ {w:"strict",t:"קפדני; מחמיר",ex:"Strict school rules.",lv:2},
+ {w:"sincere",t:"כן; אמיתי",ex:"A sincere apology.",lv:3},
+ {w:"overlook",t:"להתעלם מ-; להשקיף על",ex:"Don't overlook the details.",lv:4},
+ {w:"intrusive",t:"פולשני",ex:"Intrusive personal questions.",lv:4},
+ {w:"random",t:"אקראי",ex:"A random choice.",lv:2},
+ {w:"affirm",t:"לאשר; להצהיר",ex:"The court affirmed the decision.",lv:4},
+ {w:"errand",t:"שליחות; סידור",ex:"Run errands in town.",lv:3},
+ {w:"factor",t:"גורם",ex:"A key factor in the decision.",lv:2},
+ {w:"burden",t:"נטל; עומס",ex:"A heavy financial burden.",lv:3},
+ {w:"fund",t:"קרן; לממן",ex:"Fund the new research.",lv:3},
+ {w:"core",t:"ליבה; גרעין",ex:"The core of the problem.",lv:3},
+ {w:"broad",t:"רחב",ex:"Broad knowledge of history.",lv:2},
+ {w:"mature",t:"בוגר; בשל",ex:"A mature attitude.",lv:3},
+ {w:"worship",t:"לסגוד; פולחן",ex:"They worship at the temple.",lv:4},
+ {w:"initiate",t:"ליזום",ex:"Initiate a conversation.",lv:4},
+ {w:"contradict",t:"לסתור",ex:"The reports contradict each other.",lv:4},
+ {w:"obstruct",t:"לחסום; להכשיל",ex:"Obstruct the investigation.",lv:4},
+ {w:"recognize",t:"לזהות; להכיר ב-",ex:"Recognize the warning signs.",lv:2},
+ {w:"replace",t:"להחליף",ex:"Replace the old system.",lv:2},
+ {w:"excessive",t:"מופרז",ex:"Excessive spending.",lv:3},
+ {w:"loan",t:"הלוואה",ex:"A bank loan.",lv:2},
+ {w:"ban",t:"איסור; להטיל איסור",ex:"A smoking ban in restaurants.",lv:2},
+ {w:"retreat",t:"לסגת; נסיגה",ex:"The army retreated at night.",lv:3},
+ {w:"dilemma",t:"דילמה",ex:"A moral dilemma.",lv:3},
+ {w:"revise",t:"לעדכן; לתקן",ex:"Revise the original plan.",lv:3},
+ {w:"imply",t:"לרמוז",ex:"What are you implying?",lv:4},
+ {w:"prescribe",t:"לרשום (תרופה); להורות",ex:"The doctor prescribed rest.",lv:3},
+ {w:"confirm",t:"לאמת; לוודא",ex:"Confirm the meeting time.",lv:2},
+ {w:"conscious",t:"מודע; בהכרה",ex:"A conscious decision.",lv:3},
+ {w:"irreversible",t:"בלתי הפיך",ex:"Irreversible damage.",lv:4},
+ {w:"intimidate",t:"להפחיד; להרתיע",ex:"Don't let them intimidate you.",lv:4},
+ {w:"mutual",t:"הדדי",ex:"Mutual respect between partners.",lv:3},
+ {w:"fraud",t:"הונאה",ex:"Insurance fraud is a crime.",lv:3},
+ {w:"dormant",t:"רדום",ex:"A dormant volcano.",lv:5}
+];
+
+/* ============ מנוע חזרה מרווחת (Leitner) ============ */
+const INTERVALS=[0,1,2,4,8,15,30]; // ימים לפי קופסה
+const NEW_PER_DAY=20; // 2.8: הקצב הועלה מ-15. אם הרצף מחזיק שבועיים — 25
+/* ⚠️ 4.8: היה toISOString() = תאריך UTC. המשתמש בישראל (UTC+3) — תרגול אחרי חצות
+   נרשם ליום הקודם, והרצף נשבר על יום שכן תורגל. מפתח היום = תאריך מקומי בלבד. */
+function dayKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayKey(){return dayKey(new Date());}
+function srsLoad(){
+  try{return JSON.parse(localStorage.getItem('amirnet_srs'))||{cards:{},log:{}};}
+  catch(e){return {cards:{},log:{}};}
+}
+/* ⚠️ 4.8: היה try/catch שותק — אם הדפדפן חוסם אחסון (ספארי פרטי / מכסה מלאה),
+   ההתקדמות נעלמה בלי שאף אחד ידע. עכשיו נרשם דגל שהדשבורד מציג. */
+window._srsWriteFailed=false;
+function srsSave(s){
+  try{
+    localStorage.setItem('amirnet_srs',JSON.stringify(s));
+    // אימות אמיתי: לקרוא בחזרה. ספארי לפעמים "מצליח" לכתוב ולא שומר.
+    if(!localStorage.getItem('amirnet_srs'))throw new Error('write-verify');
+    window._srsWriteFailed=false;
+  }catch(e){window._srsWriteFailed=true;}
+}
+function srsStats(){
+  const s=srsLoad();const today=todayKey();
+  let due=0,learning=0,mastered=0;
+  for(const w in s.cards){
+    const c=s.cards[w];
+    if(c.b>=4)mastered++;else learning++;
+    if(c.due<=today)due++;
+  }
+  // רצף: ימים עוקבים עם פעילות, נגמר היום או אתמול
+  let streak=0;const d=new Date();
+  if(!s.log[todayKey()])d.setDate(d.getDate()-1);
+  while(s.log[dayKey(d)]){streak++;d.setDate(d.getDate()-1);}
+  const totalDays=Object.keys(s.log||{}).length;
+  return {due,learning,mastered,streak,totalDays,cards:Object.keys(s.cards||{}).length};
+}
+/* בניית סשן: חזרות שהגיע זמנן + מילים חדשות (העדיפות: מילים מהאבחון, אח"כ לפי רמה) */
+const sess={queue:[],i:0,correct:0,wrong:0,newCount:0,revCount:0,order:[],phase:''};
+function startSession(reviewsOnly){
+  const s=srsLoad();const today=todayKey();
+  const startedToday=(s.log[today]&&s.log[today].n)||0;
+  const due=Object.keys(s.cards).filter(w=>s.cards[w].due<=today)
+    .sort((a,b)=>s.cards[a].due<s.cards[b].due?-1:1).slice(0,40);
+  // בלם עומס (מחקר): כשמצטברות הרבה חזרות — מורידים מילים חדשות, לא מדלגים על חזרות
+  const dailyCap=due.length>=35?5:NEW_PER_DAY;
+  const newWords=reviewsOnly?[]:WORDS.filter(x=>!s.cards[x.w])
+    .sort((a,b)=>(b.pri||0)-(a.pri||0)||a.lv-b.lv)
+    .slice(0,Math.max(0,dailyCap-startedToday));
+  sess.queue=[
+    ...due.map(w=>({word:WORDS.find(x=>x.w===w)||{w,t:'',ex:'',lv:0},isNew:false})),
+    ...newWords.map(x=>({word:x,isNew:true,needLearn:true}))
+  ];
+  sess.i=0;sess.correct=0;sess.wrong=0;sess.newCount=newWords.length;sess.revCount=due.length;
+  if(!sess.queue.length){
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🎉 סיימת להיום!</h2>'+
+    '<p class="sub">אין חזרות שמחכות והשלמת את מנת המילים היומית. תחזור מחר — החזרה במרווחים היא כל הקסם.</p>'+
+    '<button class="btn ghost" onclick="intro()">חזרה</button></div>';
+    return;
+  }
+  nextSessItem();
+}
+function nextSessItem(){
+  if(sess.i>=sess.queue.length){sessDone();return;}
+  const item=sess.queue[sess.i];
+  if(item.needLearn)renderLearn(item);else renderSessQuiz(item);
+}
+function renderLearn(item){
+  const w=item.word;
+  app.innerHTML='<div class="card" style="text-align:center">'+
+    '<p class="sub">מילה חדשה · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
+    '<div class="en" style="font-size:2rem;font-weight:700;text-align:center">'+w.w+'</div>'+
+    '<div style="font-size:1.3rem;font-weight:600;margin:6px 0">'+w.t+'</div>'+
+    '<div class="en" style="text-align:center;color:var(--muted);font-size:1rem">"'+w.ex+'"</div>'+
+    '<p class="note">קרא את המשפט, תגיד את המילה בקול — ואז נבדוק</p>'+
+    '<button class="btn" onclick="learnDone()">הבנתי — תבחן אותי</button></div>';
+}
+function learnDone(){
+  sess.queue[sess.i].needLearn=false;
+  // הבוחן יגיע אחרי 2 פריטים — לא מיד אחרי החשיפה
+  const item=sess.queue.splice(sess.i,1)[0];
+  sess.queue.splice(Math.min(sess.i+2,sess.queue.length),0,item);
+  nextSessItem();
+}
+function renderSessQuiz(item){
+  const w=item.word;
+  // מילה עקשנית (3+ כישלונות) — היפוך כיוון: עברית→אנגלית (מחקר: הכיוון הקשה מחזק את שניהם)
+  const s=srsLoad();const card=s.cards[w.w];
+  const reverse=!item.isNew&&card&&(card.laps||0)>=3;
+  // מסיחים: מילים קרובות ברמה, מסוננות גם לפי המשמעות הראשונה (שלא ייכנס מסיח נרדף)
+  const firstT=x=>x.split(/[;,]/)[0].trim();
+  const cand=WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&Math.abs(x.lv-w.lv)<=1);
+  const pool=shuffle(cand).slice(0,3);
+  const opts=reverse?[w.w,...pool.map(x=>x.w)]:[w.t,...pool.map(x=>x.t)];
+  sess.order=shuffle([0,1,2,3]);
+  const stem=reverse
+    ?'<div style="font-size:1.5rem;text-align:center;font-weight:700;margin:18px 0">'+w.t+'</div>'+
+     '<p class="sub" style="text-align:center">🔁 מילה עקשנית — הפעם הפוך: איזו מילה באנגלית?</p>'
+    :'<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>';
+  const optStyle=reverse?'direction:ltr;text-align:left;font-family:Georgia,serif':'direction:rtl;text-align:right;font-family:inherit';
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">'+(item.isNew?'מילה חדשה':'חזרה')+' · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
+    stem+
+    '<div class="opts">'+sess.order.map((oi,vi)=>
+      '<button type="button" class="opt" style="'+optStyle+'" onclick="sessAnswer('+vi+','+oi+')">'+
+      '<span class="letter">'+['א','ב','ג','ד'][vi]+'</span><span>'+opts[oi]+'</span></button>').join('')+
+    '</div></div>';
+  sess._opts=opts;
+}
+function sessAnswer(vi,oi){
+  const item=sess.queue[sess.i];const w=item.word;
+  const right=oi===0;
+  const s=srsLoad();const today=todayKey();
+  if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
+  if(right){
+    sess.correct++;s.log[today].c++;
+    const c=s.cards[w.w]||{b:0,laps:0};
+    if(item.isNew){c.b=1;s.log[today].n++;}
+    else{c.b=Math.min(6,c.b+1);s.log[today].r++;}
+    const d=new Date();d.setDate(d.getDate()+INTERVALS[c.b]);
+    c.due=dayKey(d);
+    s.cards[w.w]=c;srsSave(s);
+    sess.i++;
+    // פידבק קצר
+    flashFeedback(true,w,()=>nextSessItem());
+  }else{
+    sess.wrong++;s.log[today].w++;
+    if(!item.isNew){
+      const c=s.cards[w.w];if(c){c.b=1;c.laps=(c.laps||0)+1;
+        const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);}
+    }
+    // ⚠️ 4.8: השמירה הייתה רק בתוך ה-if — מי שטעה במילה חדשה בלבד ביום מסוים,
+    // אותו יום לא נרשם ביומן בכלל והרצף נשבר. שומרים תמיד.
+    srsSave(s);
+    // המילה חוזרת לתור — עוד 3 פריטים
+    const it=sess.queue.splice(sess.i,1)[0];it.isNew=item.isNew;
+    sess.queue.splice(Math.min(sess.i+3,sess.queue.length),0,it);
+    flashFeedback(false,w,()=>nextSessItem());
+  }
+}
+function flashFeedback(ok,w,then){
+  app.innerHTML='<div class="card" style="text-align:center">'+
+    (ok?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ לא בדיוק</h2>')+
+    '<div class="en" style="font-size:1.6rem;text-align:center;font-weight:700">'+w.w+'</div>'+
+    '<div style="font-size:1.15rem;font-weight:600">'+w.t+'</div>'+
+    '<div class="en" style="text-align:center;color:var(--muted)">"'+w.ex+'"</div>'+
+    (ok?'':'<p class="note">המילה תחזור עוד כמה שאלות — עד שתשב</p>')+
+    '<button class="btn" style="margin-top:10px" onclick="_ff()">המשך ←</button></div>';
+  window._ff=then;
+  // מקש Enter ממשיך
+  const h=(e)=>{if(e.key==='Enter'){document.removeEventListener('keydown',h);then();}};
+  document.addEventListener('keydown',h);
+}
+function sessDone(){
+  const total=sess.correct+sess.wrong;
+  const pct=total?Math.round(100*sess.correct/total):100;
+  const st=srsStats();
+  app.innerHTML='<div class="card" style="text-align:center">'+
+    '<h2>🏁 סשן הושלם!</h2>'+
+    '<div class="grid2" style="margin:14px 0;text-align:right">'+
+    '<div class="stat"><div class="k">מילים חדשות</div><div class="v">'+sess.newCount+'</div></div>'+
+    '<div class="stat"><div class="k">חזרות</div><div class="v">'+sess.revCount+'</div></div>'+
+    '<div class="stat"><div class="k">דיוק</div><div class="v">'+pct+'%</div></div>'+
+    '<div class="stat"><div class="k">🔥 רצף</div><div class="v">'+st.streak+' ימים</div></div>'+
+    '</div>'+
+    '<p class="sub">המילים שטעית בהן יחזרו מחר. אלה שידעת — בעוד יומיים-ארבעה. ככה הן נכנסות לזיכרון לטווח ארוך.</p>'+
+    (new Date().getDate()%2===0
+      ?'<div class="card" style="text-align:right"><b>🏋️ עוד 5 דקות להיום:</b> השלמת משפטים — שאלות אמיתיות מהמבחן<div class="actions"><button class="btn" onclick="startSCP()">✏️ יאללה, 11 שאלות</button></div></div>'
+      :'<div class="card" style="text-align:right"><b>🏋️ עוד 5 דקות להיום:</b> ניסוח מחדש — שאלות אמיתיות מהמבחן<div class="actions"><button class="btn" onclick="startRSP()">🎯 יאללה, 8 שאלות</button></div></div>')+
+    '<button class="btn ghost" onclick="intro()">לא היום — חזרה למסך הבית</button></div>';
+}
+
+/* ============ שיטות וטיפים ============ */
+const TIPS=[
+ {icon:"🎯",title:"איך המבחן חושב — ולמה אסור להשאיר ריק",
+  body:`<p><b>המבחן אדפטיבי:</b> ענית נכון → השאלה הבאה קשה יותר (ושווה יותר נקודות). טעית → קלה יותר. הציון נקבע לפי הרמה שאליה טיפסת, לא רק לפי כמות.</p>
+  <ul class="rules">
+  <li><b>אין קנס על ניחוש — תמיד תענה.</b> שאלה ריקה = טעות בטוחה. ניחוש אחרי פסילת 2 תשובות = 50% סיכוי.</li>
+  <li><b>ההתחלה קריטית:</b> בשאלות הראשונות המערכת "מחליטה" באיזו רמה אתה. תהיה הכי מרוכז דווקא בהתחלה — אל תבזבז אותה על התארגנות.</li>
+  <li><b>אל תנסה לנחש אם אתה מצליח:</b> אם השאלות נהיות קשות — זה סימן טוב! זה אומר שאתה עולה רמה. שאלה קשה = מחמאה מהמחשב. (נבחנת אמיתית: "הציון קפץ מ-112 ל-138 כשהפסקתי להילחץ מהאדפטיביות")</li>
+  <li><b>פטור ≈ 75% נכונות</b> (לפי טבלאות ההמרה הרשמיות). מותר לטעות ברבע מהשאלות ועדיין לקבל 134 — אתה לא צריך שלמות, אתה צריך יציבות.</li>
+  <li>רק ~23 שאלות נספרות. כל שאלה שווה הרבה — אין "עוד מלא שאלות אחר כך".</li></ul>`},
+ {icon:"✏️",title:"השלמת משפטים — השיטה (12 שאלות, הכי הרבה במבחן)",
+  body:`<p>הסדר הנכון, כל שאלה:</p>
+  <ul class="rules">
+  <li><b>1. קרא את כל המשפט</b> לפני שאתה מסתכל על התשובות. המוח משלים לבד — תנסה לנחש איזו מילה חסרה <i>בעברית</i>.</li>
+  <li><b>2. קבע מטען: חיובי או שלילי?</b> "The medicine was so ___ that all patients recovered" — חייב מילה חיובית. זה פוסל חצי מהתשובות גם בלי להכיר אותן!</li>
+  <li><b>3. מילות קישור = מצפן.</b> however/but/although = היפוך כיוון. therefore/thus = המשך אותו כיוון. despite = ניגוד. אם לפני ה-but טוב — אחריו רע.</li>
+  <li><b>4. פסילה לפני בחירה.</b> גם אם אתה לא יודע מה נכון — פסול מה שבטוח לא. נשארו 2? לך על המילה שנשמעת "אקדמית" יותר בהקשר רציני.</li>
+  <li><b>5. תחיליות וסיומות עוזרות:</b> un/dis/mis = שלילי · re = שוב · over = יותר מדי · ‎-less = בלי · ‎-ful = מלא ב-. worthless = חסר ערך גם אם לא למדת את המילה.</li></ul>`},
+ {icon:"🔁",title:"ניסוח מחדש — כאן המסיחים מלוכלכים (6 שאלות)",
+  body:`<p>נותנים לך משפט + 4 גרסאות. שלוש מהן <b>מסלפות בכוונה</b>, וכך הן עושות את זה:</p>
+  <ul class="rules">
+  <li><b>היפוך שלילה:</b> המקור "hardly anyone came" (כמעט אף אחד) ← מסיח: "almost everyone came". שים לב ל-hardly, scarcely, barely — הן מילים <i>שליליות</i>.</li>
+  <li><b>היפוך סיבה-תוצאה:</b> "בגלל א' קרה ב'" ← מסיח: "בגלל ב' קרה א'". תשאל את עצמך: מי גרם למי?</li>
+  <li><b>שינוי כמות:</b> some↔all, few↔many, always↔sometimes. מילה אחת קטנה משנה הכל.</li>
+  <li><b>תוספת שלא הייתה:</b> מסיח שנשמע הגיוני אבל מוסיף מידע שהמקור לא אמר. נכון בחיים ≠ נכון בשאלה.</li></ul>
+  <p><b>השיטה:</b> שאל על המקור "מי עשה מה למי?" — ואז בדוק שכל תשובה משמרת את זה בדיוק. השווה <b>כל תשובה למקור</b>, לא תשובות אחת לשנייה.</p>
+  <p><b>5 המלכודות (מנותחות מבחינות אמיתיות של המרכז הארצי):</b></p>
+  <ul class="rules">
+  <li><b>1. היפוך כיוון סיבתי</b> — "בזכות דיקנס הרומן הצליח" ← מסיח: "בזכות הרומן דיקנס הצליח". המלכודת הנפוצה ביותר!</li>
+  <li><b>2. הזזת המגביל</b> — "המתכנן היחיד של הבית" ≠ "הבית היחיד שתכנן". ה-only זז למילה אחרת.</li>
+  <li><b>3. עובדה ↔ דעה</b> — המקור אומר עובדה, המסיח מוסיף "is thought to / may be" (או הפוך).</li>
+  <li><b>4. מידע שלא היה</b> — נשמע נכון בחיים, אבל המקור לא אמר את זה.</li>
+  <li><b>5. שינוי כמת</b> — only 12% ↔ most, rarely ≠ never, few ≠ some.</li></ul>
+  <p><b>תבניות שחוזרות:</b> אקטיב↔פסיב ("X is the leading cause of Y" ↔ "Y is most commonly caused by X") · החלפת מילות קישור (yet↔although, due to↔because of) · "It was because of X that Y" · "far from clear" ← "no one was sure".</p>`},
+ {icon:"📖",title:"הבנת הנקרא — 15 דקות, 5 שאלות",
+  body:`<ul class="rules">
+  <li><b>קרא קודם את הקטע, לא את השאלות</b> — אבל קריאה חכמה: משפט ראשון של כל פסקה מקבל 100% ריכוז (שם הרעיון), השאר ברפרוף. ~3 דקות.</li>
+  <li><b>התשובה תמיד בקטע.</b> לא מה שאתה יודע מהחיים, לא מה שהגיוני — מה שכתוב. מסיחים אוהבים להיות "נכונים בחיים אבל לא בקטע".</li>
+  <li><b>שאלת רעיון מרכזי:</b> התשובה הנכונה מכסה את <i>כל</i> הקטע. מסיח קלאסי = פרט אמיתי מפסקה אחת שמוצג כאילו הוא הרעיון כולו.</li>
+  <li><b>שאלת מילה בהקשר:</b> אל תענה מהזיכרון! חזור למשפט, מחק את המילה, ותראה איזו תשובה מתאימה לחור. לפעמים הפירוש הנכון הוא דווקא הפחות מוכר.</li>
+  <li><b>ניהול זמן:</b> 3 דק' קריאה + ~2 דק' לשאלה = בדיוק 13-15. שאלה תקועה? נחש מושכל והמשך — עדיף לענות על כולן.</li></ul>`},
+ {icon:"⏱️",title:"ניהול זמן ולחץ",
+  body:`<ul class="rules">
+  <li><b>השלמת משפטים:</b> דקה לשאלה. עברת דקה וחצי? פסול מה שאפשר, נחש, הלאה.</li>
+  <li><b>ניסוח מחדש:</b> 2 דקות לשאלה. אלה שאלות שדורשות קריאה של 5 משפטים — אל תיבהל מזה.</li>
+  <li><b>אל תסתכל על הטיימר אחרי כל שאלה</b> — רק בנקודות ביקורת: באמצע פרק, ולקראת הסוף.</li>
+  <li><b>נשארו 30 שניות ויש שאלות פתוחות? ענה על הכל, גם בניחוש.</b> ריק = 0%. ניחוש = 25% מינימום.</li>
+  <li><b>נשימה בין פרקים:</b> הזמן הוא פר-פרק — פרק גרוע לא "גונב" זמן מהבא. כל פרק הוא התחלה נקייה.</li></ul>`},
+ {icon:"📅",title:"איך ללמוד נכון (המדע, בקצר)",
+  body:`<ul class="rules">
+  <li><b>10 דקות כל יום מנצחות שעתיים בשבת.</b> הזיכרון נבנה מחזרות מרווחות, לא ממרתונים. זה בדיוק מה שהתרגול היומי כאן עושה.</li>
+  <li><b>להגיד בקול:</b> כשאתה לומד מילה חדשה — תגיד אותה + התרגום בקול. שמיעה+דיבור = עוד שני ווים בזיכרון.</li>
+  <li><b>לחבר לחיים:</b> require — "הפוליסה requires חתימה". מילה שחיברת לעולם הביטוח שלך לא הולכת לשום מקום.</li>
+  <li><b>טעויות = זהב.</b> מילה שטעית בה ונזכרת — נזכרת חזק יותר ממילה שידעת מיד. אל תתבאס מטעויות בתרגול, הן עושות את העבודה.</li>
+  <li><b>אנגלית פסיבית בין סשנים:</b> סרטים עם כתוביות באנגלית, כותרות חדשות באנגלית. לא חובה — אבל כל חשיפה מוסיפה.</li></ul>`},
+ {icon:"🎓",title:"יום המבחן",
+  body:`<ul class="rules">
+  <li><b>שבוע לפני:</b> רק חזרות וסימולציות — לא מילים חדשות. מגיעים עם ביטחון, לא עם עומס טרי.</li>
+  <li><b>לילה לפני:</b> שינה מלאה. עייפות שווה יותר נקודות מכל מה שתלמד באותו לילה.</li>
+  <li><b>במבחן:</b> הפרקים הראשונים בריכוז מקסימלי (שם נקבעת הרמה). שאלה קשה = אתה בכיוון הנכון.</li>
+  <li><b>פרקי הפיילוט</b> (שמע/כתיבה אם יופיעו) — לא נספרים בציון. תעשה אותם רגוע, בלי להישחק.</li>
+  <li><b>עלות טעות:</b> ₪315 לניסיון + 35 יום המתנה חובה בין מבחנים. שווה להגיע מוכן לראשון — אבל גם אם לא עבר, זה אימון של אמת. בלי דרמה.</li></ul>`}
+];
+function showTips(){
+  document.getElementById('topbar').style.visibility='hidden';
+  app.innerHTML='<div class="card"><h1>🧠 שיטות וטיפים</h1>'+
+    '<p class="sub">לחץ על נושא לפתיחה. כדאי לחזור לכאן פעם בשבוע — דברים "נדלקים" אחרי שצוברים ניסיון בתרגול.</p></div>'+
+    TIPS.map((t,i)=>'<div class="card" style="padding:0;overflow:hidden">'+
+      '<button class="opt" style="direction:rtl;text-align:right;border:none;border-radius:0;font-family:inherit;font-size:1.05rem;font-weight:600;padding:16px 18px" onclick="toggleTip('+i+')">'+
+      '<span>'+t.icon+' '+t.title+'</span></button>'+
+      '<div id="tip'+i+'" class="hidden" style="padding:4px 20px 16px">'+t.body+'</div></div>').join('')+
+    '<div class="card"><button class="btn ghost" onclick="intro()">→ חזרה למסך הבית</button></div>';
+}
+function toggleTip(i){document.getElementById('tip'+i).classList.toggle('hidden');}
+
+/* ============ מבחני רמה + המסלול שלי (שיטת LexiBoost מותאמת) ============ */
+function levelsLoad(){try{return JSON.parse(localStorage.getItem('amirnet_levels'))||{};}catch(e){return {};}}
+function levelsSave(o){try{localStorage.setItem('amirnet_levels',JSON.stringify(o));}catch(e){}}
+function levelStats(l){
+  const s=srsLoad();
+  const all=WORDS.filter(x=>x.lv===l);
+  const learned=all.filter(x=>s.cards[x.w]);
+  const mastered=learned.filter(x=>s.cards[x.w].b>=4);
+  return {total:all.length,learned:learned.length,mastered:mastered.length,words:learned};
+}
+function simsList(){ // רק סימולציות מלאות (לא בדיקות מילים)
+  try{return (JSON.parse(localStorage.getItem('amirnet_diag'))||[]).filter(r=>typeof r.score==='number');}
+  catch(e){return [];}
+}
+
+const lvex={l:0,qs:[],i:0,correct:0,wrong:[],order:[]};
+function startLevelExam(l){
+  const st=levelStats(l);
+  if(st.learned<20){
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🔒 עוד לא</h2>'+
+      '<p class="sub">מבחן רמה '+l+' דורש לפחות 20 מילים שנלמדו ברמה הזאת (יש לך '+st.learned+' מתוך '+st.total+'). המשך בתרגול היומי — הוא יביא אותך לשם.</p>'+
+      '<button class="btn ghost" onclick="showPath()">→ חזרה למסלול</button></div>';
+    return;
+  }
+  lvex.l=l;lvex.qs=shuffle(st.words.slice()).slice(0,20);
+  lvex.i=0;lvex.correct=0;lvex.wrong=[];
+  renderLvexQ();
+}
+function renderLvexQ(){
+  const w=lvex.qs[lvex.i];
+  const firstT=x=>x.split(/[;,]/)[0].trim();
+  const pool=shuffle(WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&Math.abs(x.lv-w.lv)<=1)).slice(0,3);
+  const opts=[w.t,...pool.map(x=>x.t)];
+  lvex.order=shuffle([0,1,2,3]);
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">🏅 מבחן רמה '+lvex.l+' · שאלה '+(lvex.i+1)+' מתוך '+lvex.qs.length+' · צריך 90% לעבור</p>'+
+    '<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>'+
+    '<div class="opts">'+lvex.order.map((oi,vi)=>
+      '<button type="button" class="opt" style="direction:rtl;text-align:right;font-family:inherit" onclick="lvexAnswer('+vi+')">'+
+      '<span class="letter">'+['א','ב','ג','ד'][vi]+'</span><span>'+opts[oi]+'</span></button>').join('')+
+    '</div></div>';
+}
+function lvexAnswer(vi){
+  const w=lvex.qs[lvex.i];
+  if(lvex.order[vi]===0)lvex.correct++;else lvex.wrong.push(w);
+  lvex.i++;
+  if(lvex.i>=lvex.qs.length){
+    const pct=Math.round(100*lvex.correct/lvex.qs.length);
+    const passed=pct>=90;
+    if(passed){const L=levelsLoad();L[lvex.l]={passed:true,score:pct,date:new Date().toISOString().slice(0,10)};levelsSave(L);}
+    app.innerHTML='<div class="card" style="text-align:center">'+
+      (passed?'<h2 style="color:var(--good)">🏅 עברת! רמה '+lvex.l+' סגורה ('+pct+'%)</h2>'+
+        '<p class="sub">הישג אמיתי — המילים האלה איתך. ממשיכים במסלול!</p>'
+      :'<h2 style="color:var(--bad)">'+pct+'% — עוד לא 90%</h2>'+
+        '<p class="sub">קרוב! המילים שנפלו יחזרו בתרגול היומי. חזור למבחן בעוד 3-4 ימים.</p>'+
+        (lvex.wrong.length?'<table class="rep" style="text-align:right"><tr><th style="text-align:left">מילה</th><th>תרגום</th></tr>'+
+          lvex.wrong.map(w=>'<tr><td style="direction:ltr;text-align:left;font-family:Georgia,serif">'+w.w+'</td><td>'+w.t+'</td></tr>').join('')+'</table>':''))+
+      '<div class="actions" style="justify-content:center"><button class="btn" onclick="showPath()">→ חזרה למסלול</button></div></div>';
+  }else renderLvexQ();
+}
+
+function showPath(){
+  document.getElementById('topbar').style.visibility='hidden';
+  const L=levelsLoad();
+  const sims=simsList();
+  const lvRow=(l)=>{
+    const st=levelStats(l);
+    const passed=L[l]&&L[l].passed;
+    const pct=st.total?Math.round(100*st.learned/st.total):0;
+    const canTest=st.learned>=20;
+    return '<tr><td>רמה '+l+' — '+VOCAB_LEVEL_NAMES[l]+'</td>'+
+      '<td>'+st.learned+' / '+st.total+' נלמדו ('+pct+'%)</td>'+
+      '<td>'+(passed?'<span class="pill good">✅ עברת '+L[l].score+'%</span>'
+        :canTest?'<button class="btn" style="padding:6px 14px;font-size:.9rem" onclick="startLevelExam('+l+')">🏅 מבחן רמה</button>'
+        :'<span class="pill mid">🔒 עוד '+Math.max(0,20-st.learned)+' מילים</span>')+'</td></tr>';
+  };
+  // קביעת פאזה נוכחית
+  const phaseA_done=L[2]&&L[2].passed&&L[3]&&L[3].passed;
+  const risingSims=sims.length>=2&&sims[sims.length-1].score>sims[sims.length-2].score;
+  const last2avg=sims.length>=2?(sims[sims.length-1].score+sims[sims.length-2].score)/2:0;
+  const phaseB_done=phaseA_done&&sims.length>=2&&risingSims;
+  const phase=phaseA_done?(phaseB_done?'ג':'ב'):'א';
+  // המלצת סימולציות (כלל LexiBoost מותאם)
+  let simRec='';
+  if(sims.length===0)simRec=phaseA_done?'🎯 הגיע הזמן לסימולציה הראשונה! (במחשב, 39 דק\')':'סימולציות ייפתחו אחרי סגירת רמות 2-3 — קודם מילים.';
+  else if(last2avg>=130)simRec='🚀 ממוצע 130+ בשתי האחרונות — אתה בטווח פטור. שווה להירשם למבחן האמיתי!';
+  else if(sims[sims.length-1].score<110)simRec='ההמלצה: עוד שבועיים של מילים לפני הסימולציה הבאה — לבנות בסיס, לא להישחק.';
+  else simRec='קצב נכון: סימולציה כל שבועיים. תמשיך במילים בין לבין.';
+  const simBars=sims.slice(-6).map(s=>{
+    const h=Math.max(8,Math.round((s.score-50)*0.8));
+    return '<div style="display:inline-block;width:36px;margin:0 4px;text-align:center">'+
+      '<div style="font-size:.75rem;font-variant-numeric:tabular-nums">'+s.score+'</div>'+
+      '<div style="height:'+h+'px;background:'+(s.score>=134?'var(--good)':'var(--accent)')+';border-radius:3px 3px 0 0"></div>'+
+      '<div style="font-size:.65rem;color:var(--muted)">'+s.date.slice(5,10).split('-').reverse().join('.')+'</div></div>';
+  }).join('');
+  const box=(letter,title,items,state)=>
+    '<div class="card" style="border-right:4px solid '+(state==='now'?'var(--accent)':state==='done'?'var(--good)':'var(--line)')+'">'+
+    '<h2>'+(state==='done'?'✅':state==='now'?'📍':'🔒')+' פאזה '+letter+' — '+title+(state==='now'?' <span class="pill good">אתה כאן</span>':'')+'</h2>'+
+    '<ul class="rules">'+items.map(i=>'<li>'+i+'</li>').join('')+'</ul></div>';
+  app.innerHTML='<div class="card"><h1>🗺️ המסלול שלי ל-134</h1>'+
+    '<p class="sub">בשיטת השערים: לא תאריכים — הישגים. עוברים שער, ממשיכים הלאה. מומלץ להציץ כאן בתחילת כל שבוע.</p></div>'+
+    box('א\'','בסיס המילים',[
+      'תרגול יומי (~20 דק\') + 5 דקות שאלות אמת',
+      '<b>השער:</b> מבחן רמה 2 ב-90%+ ואז מבחן רמה 3 ב-90%+'],phaseA_done?'done':'now')+
+    '<div class="card"><h2>🏅 מבחני הרמה</h2><table class="rep"><tr><th>רמה</th><th>התקדמות</th><th>מצב</th></tr>'+
+    [2,3,4,5].map(lvRow).join('')+'</table>'+
+    '<p class="note" style="margin-top:8px">מבחן = 20 שאלות מהמילים שלמדת ברמה. 90% ומעלה = הרמה סגורה. נכשלת? המילים יחזרו בתרגול וחוזרים בעוד כמה ימים.</p></div>'+
+    box('ב\'','שילוב סימולציות',[
+      'ממשיכים מילים (רמות 4-5) + <b>סימולציה מלאה כל שבועיים</b> — במחשב, כמו במבחן האמיתי',
+      '<b>השער:</b> שתי סימולציות עם מגמת עלייה'],phaseA_done?(phaseB_done?'done':'now'):'lock')+
+    box('ג\'','חידוד אחרון',[
+      'רק חזרות (בלי מילים חדשות בשבוע האחרון) + 2-3 סימולציות, כולל הבחינות הרשמיות של המרכז הארצי',
+      '<b>השער:</b> ממוצע 130+ בשתי סימולציות → נרשמים למבחן האמיתי 🎓'],phaseB_done?'now':'lock')+
+    '<div class="card"><h2>📊 הסימולציות שלי</h2>'+
+    (sims.length?'<div style="display:flex;align-items:flex-end;justify-content:center;min-height:110px;padding:8px 0">'+simBars+'</div>':'<p class="sub">עוד אין — הסימולציה הראשונה מחכה בפאזה ב\'.</p>')+
+    '<p style="margin-top:8px"><b>'+simRec+'</b></p></div>'+
+    '<div class="card"><button class="btn ghost" onclick="intro()">→ חזרה למסך הבית</button></div>';
+}
+
+/* ============ תרגול ניסוח מחדש — שאלות אמיתיות מבחינות נית"ב ============ */
+const RSP=[ // c=0 תמיד · trap = איזו מלכודת כל מסיח מייצג (לפי סדר o אחרי הנכונה)
+ {s:"Most people want more than they can afford to buy.",
+  o:["Most people do not have enough money to buy everything they want.",
+     "Most people can afford to buy more than they need.",
+     "Most people buy many things they cannot pay for.",
+     "Most people want to buy cheaper products."],
+  trap:["","היפוך המשמעות — המקור אומר בדיוק הפוך","מידע שלא היה — המקור לא אמר שהם קונים","מידע שלא היה — אין מילה על מחירים"]},
+ {s:"George Washington was the sole planner and architect of his home, Mount Vernon.",
+  o:["George Washington designed Mount Vernon by himself.",
+     "Mount Vernon was the only home George Washington ever designed.",
+     "George Washington hired an architect to plan Mount Vernon.",
+     "George Washington helped design several famous homes."],
+  trap:["","הזזת המגביל! 'המתכנן היחיד' הפך ל'הבית היחיד'","סותר את המקור — הוא תכנן בעצמו","סותר את sole — יחיד"]},
+ {s:"Aside from providing one's children with love, many responsibilities accompany parenting.",
+  o:["Being a parent involves many responsibilities in addition to loving one's children.",
+     "Love is the only real responsibility of parenting.",
+     "Parents who love their children have fewer responsibilities.",
+     "Children are responsible for loving their parents."],
+  trap:["","היפוך כמת — aside from = בנוסף, לא 'רק'","מידע שלא היה — אין קשר כזה במקור","היפוך כיוון — מי אחראי כלפי מי"]},
+ {s:"At the outbreak of World War I, there were very few aeroplanes in existence and their military role was far from clear.",
+  o:["No one was sure how the small number of aeroplanes available at the beginning of World War I would be used by the military.",
+     "The military had many aeroplanes at the start of World War I but did not use them.",
+     "Aeroplanes played a clear and important military role from the beginning of World War I.",
+     "Aeroplanes were invented during World War I for military purposes."],
+  trap:["","שינוי כמת — very few הפך ל-many","היפוך — far from clear אומר בדיוק הפוך","מידע שלא היה — המקור לא אמר מתי הומצאו"]},
+ {s:"Only twelve percent of New Zealand's workforce is employed in agriculture, yet agricultural products are the mainstay of the country's economy.",
+  o:["Although farming is vital to the economy of New Zealand, most of the country's workers are not employed in agriculture.",
+     "Because few people work in agriculture, it is not important to New Zealand's economy.",
+     "Most of New Zealand's workers are employed in agriculture.",
+     "New Zealand's economy no longer depends on agricultural products."],
+  trap:["","היפוך — yet מסמן ניגוד: דווקא כן חשוב","שינוי כמת — only 12% = most are NOT","היפוך — mainstay אומר שכן תלוי"]},
+ {s:"The rise in popularity of the English novel was largely due to the success of two nineteenth-century novelists: Dickens and Hardy.",
+  o:["It was mostly because of Dickens and Hardy that the English novel gained popularity.",
+     "The success of the English novel made Dickens and Hardy popular.",
+     "Dickens and Hardy wrote the first English novels.",
+     "The English novel lost popularity despite Dickens and Hardy."],
+  trap:["","היפוך כיוון סיבתי! מי גרם למי — הם לרומן, לא הרומן להם","מידע שלא היה — 'ראשונים' לא נאמר","היפוך — rise הפך ל-lost"]},
+ {s:"While acid rain is commonly presumed to be a twentieth-century phenomenon, the term was coined in the nineteenth century.",
+  o:["The term 'acid rain' was first used in the nineteenth century — the phenomenon is not as new as many people believe.",
+     "Acid rain became a problem only in the twentieth century.",
+     "The term 'acid rain' was invented in the twentieth century.",
+     "Nineteenth-century scientists proved that acid rain is harmless."],
+  trap:["","המלכודת: משמיט שמדובר בטעות נפוצה (presumed)","היפוך — המונח נטבע במאה ה-19","מידע שלא היה — אין מילה על harmless"]},
+ {s:"Macular degeneration is the leading cause of adult blindness.",
+  o:["Adult blindness is most commonly caused by macular degeneration.",
+     "Macular degeneration is thought to be a possible cause of adult blindness.",
+     "Adult blindness is the leading cause of macular degeneration.",
+     "Macular degeneration affects only adults who are already blind."],
+  trap:["","עובדה ↔ דעה! המקור קובע עובדה, לא 'is thought'","היפוך כיוון סיבתי — מי גורם למי","סילוף מוחלט של הקשר"]}
+];
+/* השלמת משפטים — שאלות אמיתיות מבחינות נית"ב + פטור */
+const SCP=[ // c=0 תמיד
+ {s:"All doctors – not only dentists – should have basic knowledge of the teeth and how they are ___ by disease.",
+  o:["affected","formed","corrected","explained"],
+  why:"affected by = מושפעים מ-. המחלה משפיעה על השיניים."},
+ {s:"The judge refused to ___ the evidence to be presented in court, stating that it was not relevant to the case.",
+  o:["allow","pardon","silence","restrict"],
+  why:"allow X to be = להתיר. refused to allow = סירב להתיר."},
+ {s:"James Young, a Scottish chemist, died a wealthy man, having amassed a great ___ by successfully marketing paraffin lighting oil.",
+  o:["fortune","file","crowd","laboratory"],
+  why:"amass a fortune = לצבור הון. הרמז: wealthy man."},
+ {s:"___ exposure to harmful substances in the air may cause permanent damage to the lungs.",
+  o:["Prolonged","Synthetic","Appropriate","Classified"],
+  why:"prolonged exposure = חשיפה ממושכת. רק 'ממושך' מסביר נזק קבוע."},
+ {s:"International banks are occasionally forced to close some of their branches because of political ___ in host countries.",
+  o:["unrest","modesty","identities","appearances"],
+  why:"political unrest = אי-שקט פוליטי — הסיבה היחידה שסוגרת סניפים."},
+ {s:"Providing better education for their citizens may be the ___ economic success for many countries in the next century.",
+  o:["key to","exception to","risk of","compensation for"],
+  why:"the key to success = המפתח להצלחה. צירוף קבוע."},
+ {s:"Doctors know they cannot save all patients, as some are ___ help.",
+  o:["beyond","after","less","no"],
+  why:"beyond help = מעבר לעזרה = אי אפשר לעזור להם. צירוף קבוע."},
+ {s:"Aspirin is an effective means of preventing dangerous blood clots; ___, it is inexpensive and has few side effects.",
+  o:["moreover","nevertheless","however","therefore"],
+  why:"שני חלקי המשפט חיוביים = ממשיכים באותו כיוון = moreover. however/nevertheless = היפוך (פסול), therefore = סיבה-תוצאה (אין כאן)."},
+ {s:"In Japanese cities, where living space is ___, the typical family lives in a two-room apartment.",
+  o:["scarce","broad","clumsy","mature"],
+  why:"scarce = מצומצם/נדיר. דירת 2 חדרים ← מעט מקום."},
+ {s:"The Abacus – a counting ___ invented thousands of years ago – is still widely used in Asia.",
+  o:["device","barrier","hazard","outlet"],
+  why:"counting device = מכשיר חישוב."},
+ {s:"Many insects and reptiles ___ new surroundings by changing their coloring or appearance.",
+  o:["adapt to","assist in","collide with","descend from"],
+  why:"adapt to surroundings = מסתגלים לסביבה. שינוי צבע = הסתגלות."}
+];
+const scp={i:0,correct:0,order:[]};
+function startSCP(){
+  document.getElementById('topbar').style.visibility='hidden';
+  scp.i=0;scp.correct=0;renderSCPQ();
+}
+function renderSCPQ(){
+  const q=SCP[scp.i];
+  scp.order=shuffle([0,1,2,3]);
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">השלמת משפטים — שאלות אמיתיות מבחינות המרכז הארצי · '+(scp.i+1)+' מתוך '+SCP.length+'</p>'+
+    '<p class="sub">💡 קודם נסה לנחש את המילה בעברית, וקבע: חיובי או שלילי?</p>'+
+    '<div class="en">'+q.s.replace('___','<span class="blank">&nbsp;</span>')+'</div>'+
+    '<div class="opts">'+scp.order.map((oi,vi)=>
+      '<button type="button" class="opt" onclick="scpAnswer('+vi+')">'+
+      '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+q.o[oi]+'</span></button>').join('')+
+    '</div></div>';
+}
+function scpAnswer(vi){
+  const q=SCP[scp.i];
+  const right=scp.order[vi]===0;
+  if(right)scp.correct++;
+  app.innerHTML='<div class="card">'+
+    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ התשובה: '+q.o[0]+'</h2>')+
+    '<div class="en">'+q.s.replace('___','<b style="color:var(--good)">'+q.o[0]+'</b>')+'</div>'+
+    '<p><b>למה:</b> '+q.why+'</p>'+
+    '<div class="actions"><button class="btn" onclick="scpNext()">'+
+    (scp.i<SCP.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
+}
+function scpNext(){
+  scp.i++;
+  if(scp.i>=SCP.length){
+    const pct=Math.round(100*scp.correct/SCP.length);
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+scp.correct+' מתוך '+SCP.length+' ('+pct+'%)</h2>'+
+      '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות! 🎉':'רף הפטור ~75% — המילים מהתרגול היומי יסגרו את זה, תחזור לכאן בעוד שבוע')+'</p>'+
+      '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
+  }else renderSCPQ();
+}
+
+const rsp={i:0,correct:0,order:[]};
+function startRSP(){
+  document.getElementById('topbar').style.visibility='hidden';
+  rsp.i=0;rsp.correct=0;renderRSPQ();
+}
+function renderRSPQ(){
+  const q=RSP[rsp.i];
+  rsp.order=shuffle([0,1,2,3]);
+  app.innerHTML='<div class="card">'+
+    '<p class="sub">ניסוח מחדש — שאלות אמיתיות מבחינות המרכז הארצי · '+(rsp.i+1)+' מתוך '+RSP.length+'</p>'+
+    '<p class="sub">בחר את המשפט הקרוב ביותר במשמעותו:</p>'+
+    '<div class="en">'+q.s+'</div>'+
+    '<div class="opts">'+rsp.order.map((oi,vi)=>
+      '<button type="button" class="opt" onclick="rspAnswer('+vi+')">'+
+      '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+q.o[oi]+'</span></button>').join('')+
+    '</div></div>';
+}
+function rspAnswer(vi){
+  const q=RSP[rsp.i];
+  const oi=rsp.order[vi];
+  const right=oi===0;
+  if(right)rsp.correct++;
+  app.innerHTML='<div class="card">'+
+    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ לא — נפלת במלכודת:</h2>')+
+    (right?'':'<p><b>'+q.trap[oi]+'</b></p>')+
+    '<div class="en" style="font-size:.95rem;color:var(--muted)">'+q.s+'</div>'+
+    '<p class="sub">התשובה הנכונה:</p><div class="en" style="border-right:3px solid var(--good);padding-right:0;padding-left:10px;border-left:3px solid var(--good);border-right:none">'+q.o[0]+'</div>'+
+    '<p class="sub" style="margin-top:10px">המסיחים והמלכודות שלהם:</p><ul class="rules" style="font-size:.88rem">'+
+    q.trap.map((t,j)=>j===0?'':'<li><span class="en" style="font-size:.85rem">'+q.o[j]+'</span><br><b style="color:var(--bad)">← '+t+'</b></li>').join('')+
+    '</ul><div class="actions"><button class="btn" onclick="rspNext()">'+
+    (rsp.i<RSP.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
+}
+function rspNext(){
+  rsp.i++;
+  if(rsp.i>=RSP.length){
+    const pct=Math.round(100*rsp.correct/RSP.length);
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+rsp.correct+' מתוך '+RSP.length+' ('+pct+'%)</h2>'+
+      '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות — מצוין!':'רף הפטור הוא ~75% — תחזור לתרגול הזה בעוד כמה ימים, המלכודות נלמדות')+'</p>'+
+      '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
+  }else renderRSPQ();
+}
+
+/* ============ גיבוי / העברת התקדמות בין מכשירים ============ */
+function showTransfer(){
+  document.getElementById('topbar').style.visibility='hidden';
+  app.innerHTML=`
+  <div class="card">
+    <h1>🔄 גיבוי / העברת התקדמות</h1>
+    <p class="sub">ההתקדמות נשמרת בכל מכשיר בנפרד. כדי להעביר: העתק כאן קוד במכשיר הישן → הדבק במכשיר החדש.</p>
+    <h2>ייצוא (מהמכשיר הזה)</h2>
+    <p class="sub">מעתיק את כל ההתקדמות שלך כקוד — שלח לעצמך בוואטסאפ ופתח במכשיר השני.</p>
+    <button class="btn" onclick="exportProgress(this)">📤 העתק קוד התקדמות</button>
+    <h2 style="margin-top:22px">ייבוא (אל המכשיר הזה)</h2>
+    <p class="sub">הדבק כאן קוד שהעתקת ממכשיר אחר. ⚠️ זה מחליף את ההתקדמות במכשיר הזה.</p>
+    <textarea id="impBox" style="width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:10px;font-family:monospace;direction:ltr" placeholder="AMIRNET1:..."></textarea>
+    <div id="impMsg" style="margin-top:10px;font-weight:600"></div>
+    <div class="actions">
+      <button class="btn" onclick="importProgress()">📥 ייבא לכאן</button>
+      <button class="btn ghost" onclick="intro()">→ חזרה</button>
+    </div>
+  </div>`;
+}
+function exportProgress(btn){
+  // מייצאים רק את מצב המילים (SRS) — קומפקטי, כדי שוואטסאפ לא יחתוך.
+  // היסטוריית אבחונים נשארת במכשיר המקורי — לא נחוצה ללימוד היומי.
+  const data={srs:localStorage.getItem('amirnet_srs')||''};
+  const code='AMIRNET1:'+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  // הקוד תמיד מוצג בתיבה — גם אם ההעתקה האוטומטית נחסמת, אפשר לסמן ולהעתיק ידנית
+  const box=document.getElementById('impBox');
+  if(box){box.value=code;box.focus();box.select();}
+  const done=()=>{btn.textContent='✓ הועתק — שלח לעצמך והדבק במכשיר השני';};
+  const fail=()=>{btn.textContent='✗ העתקה אוטומטית נחסמה — הקוד מסומן בתיבה למטה: העתק אותו ידנית (Ctrl+C)';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done,()=>fallbackCopy(code,done,fail));
+  }else fallbackCopy(code,done,fail);
+}
+function impSay(msg,ok){
+  const el=document.getElementById('impMsg');
+  if(el){el.textContent=msg;el.style.color=ok?'var(--good)':'var(--bad)';}
+}
+function importProgress(){
+  // ניקוי: רווחים וירידות שורה (וואטסאפ שובר שורות), חיפוש הקוד גם אם הודבק עם טקסט מסביב
+  const raw=(document.getElementById('impBox').value||'').replace(/\s+/g,'');
+  const at=raw.indexOf('AMIRNET1:');
+  if(at<0){impSay('✗ לא נמצא קוד שמתחיל ב-AMIRNET1: — ודא שהעתקת את כל ההודעה מוואטסאפ, מההתחלה ועד הסוף',false);return;}
+  try{
+    const data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(at+9)))));
+    if(data.srs)localStorage.setItem('amirnet_srs',data.srs);
+    if(data.vocab)localStorage.setItem('amirnet_vocab',data.vocab);
+    if(data.diag)localStorage.setItem('amirnet_diag',data.diag);
+    impSay('✓ ההתקדמות יובאה בהצלחה! חוזר למסך הבית…',true);
+    setTimeout(intro,1200);
+  }catch(e){impSay('✗ הקוד חתוך או פגום — חזור למכשיר הראשון, העתק שוב ושלח מחדש (יכול להיות שוואטסאפ קיצר את ההודעה)',false);}
+}
+
+intro();
+</script>
