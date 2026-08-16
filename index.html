@@ -366,10 +366,30 @@ function storageOK(){
     return ok;
   }catch(e){return false;}
 }
+/* ⏳ 16.8 — כמה ימים עברו מאז תרגול מסוג מסוים. מבוסס על `amirnet_drills` שכבר
+   שומר {date,kind}; אין מפתח אחסון חדש. מחזיר null אם מעולם לא נעשה. */
+function daysSinceDrill(kind){
+  const a=drillsLoad().filter(x=>x.kind===kind);
+  if(!a.length)return null;
+  const ms=new Date(todayKey()+'T00:00:00')-new Date(a[a.length-1].date+'T00:00:00');
+  return Math.max(0,Math.round(ms/86400000));
+}
 function intro(){
   document.getElementById('topbar').style.visibility='hidden';
   const st=srsStats();
   const storeBad=!storageOK()||window._srsWriteFailed;
+  /* 🗓️ שער היומיים — הבקשה: "פעם ביומיים תבחן אותי בהשלמת משפטים".
+     היה כפתור שצריך לזכור ללחוץ; מעכשיו הוא **עולה מעצמו** למעלה.
+     🔑 שער ולא שוט: אין רצף נפרד ואין קנס — עברו יומיים ⇒ מופיע, נעשה ⇒ נעלם. */
+  const wsGap=daysSinceDrill('ws');
+  const wsCard=(st.cards>=8&&(wsGap===null||wsGap>=2))?`
+  <div class="card" style="border:2px solid var(--accent)">
+    <h2 style="font-size:1.05rem">🗓️ ${wsGap===null?'בוחן המשפטים מחכה לך':'עברו '+wsGap+' ימים בלי בוחן משפטים'}</h2>
+    <p class="sub">${wsGap===null
+      ?'זה הפורמט של המבחן עצמו: משפט אקדמי עם חסר, ארבע אפשרויות דומות. המילים שלך, בהקשר.'
+      :'המילים שלך בתוך משפטים — זה מה שהמבחן בודק, לא תרגום. ~4 דקות.'}</p>
+    <button class="btn" style="width:100%" onclick="startWordSent(false)">▶ יאללה, בוחן משפטים</button>
+  </div>`:'';
   app.innerHTML=`
   ${storeBad?`<div class="card" style="border:2px solid var(--bad)">
     <h2 style="color:var(--bad)">⚠️ הדפדפן לא שומר את ההתקדמות</h2>
@@ -378,6 +398,7 @@ function intro(){
     2. להיכנס תמיד מאותה סימנייה בספארי (לא מוואטסאפ, לא מאייקון "מסך הבית" — לכל אחד מהם אחסון נפרד).<br>
     3. הגדרות ← ספארי ← לוודא ש"חסום את כל קובצי Cookie" כבוי.</p>
   </div>`:''}
+  ${wsCard}
   <div class="card">
     <h1>אמירנט — מערכת התרגול שלי</h1>
     <p class="sub">היעד: 134+ · האבחון אמר: הבסיס חזק, הפער מתחיל במילים של רמה 2-3 — ושם אנחנו תוקפים</p>
@@ -395,12 +416,15 @@ function intro(){
   <div class="card">
     <h2 style="font-size:1rem">השבוע שלי</h2>
     ${(function(){
+      /* ⚠️ 16.8: שבת אינה נספרת בשבוע — לא כיום תרגול ולא כיום חסר (ראה srsStats).
+         לכן השבוע כאן הוא בן 6 ימים, והרף ל"שבוע מעולה" הוא 5 מתוך 6. */
       const s=srsLoad();let days=0,nw=0,c=0,w=0;
       for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);
+        if(d.getDay()===6)continue;
         const e=s.log[dayKey(d)];
         if(e){days++;nw+=e.n||0;c+=e.c||0;w+=e.w||0;}}
       const acc=(c+w)?Math.round(100*c/(c+w)):0;
-      return '<p class="sub">'+days+' ימי תרגול · '+nw+' מילים חדשות · דיוק '+acc+'%'+
+      return '<p class="sub">'+days+' מתוך 6 ימי תרגול · '+nw+' מילים חדשות · דיוק '+acc+'%'+
         (days>=5?' — שבוע מעולה! 🔥':days>=3?' — בכיוון טוב':' — השבוע עוד לפניך')+'</p>';
     })()}
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1208,10 +1232,18 @@ function srsStats(){
     if(c.b>=4)mastered++;else learning++;
     if(c.due<=today)due++;
   }
-  // רצף: ימים עוקבים עם פעילות, נגמר היום או אתמול
+  /* רצף: ימים עוקבים עם פעילות, נגמר היום או אתמול.
+     ⚠️ 16.8 — המשתמש: "רק ביום שבת לא עשיתי, אז הלך לי הרצף." זה היה באג ולא כלל:
+     הלולאה עצרה בכל יום בלי רישום, ולכן **שבת אחת איפסה רצף של שבועיים**.
+     מעכשיו שבת (getDay()===6) **מדולגת** — לא שוברת את הרצף ולא נספרת כיום תרגול.
+     🔑 העיקרון: המערכת נבנית סביב איך שהוא באמת חי, לא סביב לוח שבעה ימים. */
   let streak=0;const d=new Date();
-  if(!s.log[todayKey()])d.setDate(d.getDate()-1);
-  while(s.log[dayKey(d)]){streak++;d.setDate(d.getDate()-1);}
+  if(!s.log[todayKey()]&&d.getDay()!==6)d.setDate(d.getDate()-1);
+  for(;;){
+    if(d.getDay()===6){d.setDate(d.getDate()-1);continue;}   // שבת — לדלג, לא לעצור
+    if(!s.log[dayKey(d)])break;
+    streak++;d.setDate(d.getDate()-1);
+  }
   const totalDays=Object.keys(s.log||{}).length;
   return {due,learning,mastered,streak,totalDays,cards:Object.keys(s.cards||{}).length};
 }
@@ -1840,6 +1872,7 @@ function wsentNext(){
   if(wsent.i>=wsent.queue.length){
     const tot=wsent.correct+wsent.wrong;
     const pct=tot?Math.round(100*wsent.correct/tot):0;
+    if(tot)drillSave('ws',wsent.correct,tot);   // 16.8 — מזין את שער היומיים במסך הבית
     app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+wsent.correct+' מתוך '+tot+' ('+pct+'%)</h2>'+
       '<p class="sub">'+(pct>=80?'המילים האלה כבר יושבות גם בתוך משפט — זה בדיוק מה שהמבחן בודק. 🎉'
         :pct>=60?'בכיוון. המילים שטעית בהן יחזרו אליך מחר בחזרות.'
