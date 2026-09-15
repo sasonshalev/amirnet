@@ -116,6 +116,24 @@
   .pill.mid{background:var(--warn); color:#fff}
   .pill.bad{background:var(--bad); color:#fff}
   .hidden{display:none}
+  /* 15.9 — רמקול, לשונית תרגום, מסך אוצר המילים */
+  .spk{border:1px solid var(--line); background:var(--soft); color:var(--ink); border-radius:50%;
+    width:36px; height:36px; font-size:1rem; cursor:pointer; vertical-align:middle; margin:0 6px; flex-shrink:0}
+  .spk:active{background:var(--accent); color:var(--accent-ink)}
+  .wordline{display:flex; align-items:center; justify-content:center; gap:4px}
+  details.tr{margin-top:14px; border:1px solid var(--line); border-radius:8px; background:var(--soft)}
+  details.tr summary{cursor:pointer; padding:10px 14px; font-weight:600; list-style:none}
+  details.tr summary::-webkit-details-marker{display:none}
+  details.tr .he{padding:0 14px 12px; font-size:1.05rem; line-height:1.6}
+  .vgroup{margin-top:12px}
+  .vgroup summary{cursor:pointer; font-weight:700; padding:10px 0; list-style:none; display:flex; justify-content:space-between}
+  .vgroup summary::-webkit-details-marker{display:none}
+  .vrow{display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line)}
+  .vrow .vw{direction:ltr; text-align:left; font-family:Georgia,serif; font-size:1.05rem; min-width:34%}
+  .vrow .vt{flex:1; font-size:.92rem; color:var(--muted)}
+  .vrow .btn{padding:6px 12px; font-size:.85rem}
+  .vsearch{width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid var(--line); border-radius:8px;
+    background:var(--surface); color:var(--ink); font-size:1rem; font-family:inherit}
   .disclaimer{border-right:3px solid var(--warn); padding:8px 14px; background:var(--soft); border-radius:6px; font-size:.87rem; color:var(--muted); margin-top:18px}
   @media (prefers-reduced-motion: no-preference){
     .card{animation:rise .25s ease}
@@ -134,6 +152,9 @@
 
 <div class="wrap" id="app"></div>
 
+<!-- 15.9 — תוכן בלבד (משפטים, תרגומים, חלקי דיבר). נטען לפני הקוד; אם הקובץ חסר —
+     הקוד ממשיך לעבוד עם משפטי ה-ex הישנים (ראה S2/WPOS למטה). -->
+<script src="sentences.js"></script>
 <script>
 'use strict';
 /* ============ בנק שאלות ============
@@ -355,6 +376,82 @@ function weight(d){return d+2;}
 function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
+/* ============ 15.9 — תוכן חיצוני, רמקול, תרגום ============
+   ⚠️ sentences.js הוא קובץ שני בפריסה ידנית. אם נדחף index.html בלי sentences.js —
+   SENT2 לא מוגדר; בלי ההגנה הזאת כל הדף היה מת. עם ההגנה — חוזרים למשפטי ה-ex. */
+const S2=(typeof SENT2!=='undefined')?SENT2:{};
+const WPOS=(typeof WORD_POS!=='undefined')?WORD_POS:{};
+const SENT_HE_=(typeof SENT_HE!=='undefined')?SENT_HE:{};
+const SCP_HE_=(typeof SCP_HE!=='undefined')?SCP_HE:[];
+function escA(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+/* רמקול — speechSynthesis של הדפדפן (חינם, בלי רשת). בספארי iOS עובד רק מתוך לחיצה,
+   getVoices() ריק בטעינה הראשונה (onvoiceschanged), ו-speak אחרי speak נתקע בלי cancel. */
+const TTS=('speechSynthesis' in window)&&('SpeechSynthesisUtterance' in window);
+let _voice=null;
+function pickVoice(){
+  try{
+    const vs=speechSynthesis.getVoices();
+    _voice=vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+  }catch(e){}
+}
+if(TTS){pickVoice();try{speechSynthesis.onvoiceschanged=pickVoice;}catch(e){}}
+function speak(text){
+  if(!TTS||!text)return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US';u.rate=0.9;if(_voice)u.voice=_voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+// כפתור 🔊 — הטקסט יושב ב-data-say, הלחיצה נתפסת פעם אחת על #app (בלי onclick עם מרכאות)
+function spk(text,small){
+  if(!TTS||!text)return '';
+  return '<button type="button" class="spk" data-say="'+escA(text)+'" title="לשמוע"'+(small?' style="width:30px;height:30px;font-size:.85rem"':'')+'>🔊</button>';
+}
+document.getElementById('app').addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('.spk');
+  if(b){e.preventDefault();e.stopPropagation();speak(b.getAttribute('data-say'));}
+});
+/* לשונית "מה המשפט אומר" — סגורה כברירת מחדל כדי שלא יקרא עברית לפני שניסה.
+   en = המשפט המלא באנגלית (לרמקול), he = התרגום. אין תרגום ⇒ אין לשונית. */
+function trTab(en,he){
+  if(!he)return '';
+  return '<details class="tr"><summary>🔍 מה המשפט אומר</summary>'+
+    '<div class="he">'+he+'</div>'+
+    (en?'<div style="padding:0 14px 12px">'+spk(en,true)+'<span class="note">לשמוע את המשפט באנגלית</span></div>':'')+'</details>';
+}
+// חלק דיבר: מהתוכן, ואם חסר — ניחוש מהתרגום (ל- בתחילת התרגום = פועל)
+function posOf(w){
+  if(WPOS[w.w])return WPOS[w.w];
+  if(/\.\.\./.test(w.w))return 'conj';
+  return /^ל[א-ת]/.test(w.t)?'v':'?';
+}
+const firstT=x=>x.split(/[;,]/)[0].trim();
+/* ============ מנוע המסיחים — מבנה אמירנט: נכון · 1 "אולי" · 2 פסולים בבירור ============
+   הבקשה (15.9): "שניים פוסלים בטוח, אחת שהיא אולי, והרביעית התשובה".
+   near = המילים המתחרות שנכתבו ידנית בתוכן (אותה משפחה). far = חלק דיבר אחר או רמה
+   רחוקה. בלי near (מילה שעוד אין לה תוכן) — נופלים למסיחים האקראיים הישנים (רמה ±1).
+   mode: 'he' = תרגומים · 'sent'/'reverse' = מילים באנגלית. */
+function buildOptions(w,mode,nearList){
+  const asText=x=>mode==='he'?x.t:x.w;
+  const base=WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&(mode==='he'||!/\.\.\./.test(x.w)));
+  const near=(nearList||[]).map(n=>WORDS.find(x=>x.w===n)).filter(x=>x&&x.t!==w.t&&firstT(x.t)!==firstT(w.t));
+  if(!near.length){
+    const pool=shuffle(base.filter(x=>Math.abs(x.lv-w.lv)<=1)).slice(0,3);
+    return [asText(w),...pool.map(asText)];
+  }
+  const nw=near[Math.floor(Math.random()*near.length)];
+  const nearSet=new Set(near.map(x=>x.w));
+  const pw=posOf(w);
+  let far=base.filter(x=>!nearSet.has(x.w)&&((pw!=='?'&&posOf(x)!=='?'&&posOf(x)!==pw)||Math.abs(x.lv-w.lv)>=2));
+  if(far.length<2)far=base.filter(x=>!nearSet.has(x.w));
+  // בתרגום — שהמסיחים הרחוקים לא יחלקו משמעות ראשונה עם ה"אולי"
+  far=far.filter(x=>firstT(x.t)!==firstT(nw.t));
+  const pool=shuffle(far).slice(0,2);
+  return [asText(w),asText(nw),...pool.map(asText)];
+}
+
 /* ============ מסך הבית — דשבורד ============ */
 /* ⚠️ 4.8: הרצף הראה 0 ביום השלישי. הבדיקה הזאת עונה על השאלה "האם הדפדפן בכלל
    שומר?" — בספארי פרטי / כשהאחסון חסום, הכתיבה נכשלת בשקט וכל יום מתחיל מאפס. */
@@ -428,6 +525,7 @@ function intro(){
         (days>=5?' — שבוע מעולה! 🔥':days>=3?' — בכיוון טוב':' — השבוע עוד לפניך')+'</p>';
     })()}
     <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="showVocab()">📚 אוצר המילים שלי</button>
       <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="showPath()">🗺️ המסלול שלי ל-134</button>
       <button class="btn ghost" style="border:1.5px solid var(--accent)" onclick="startWordSent(false)">📄 משפטים על המילים שלי</button>
       <button class="btn ghost" onclick="startSCP()">✏️ השלמת משפטים — שאלות אמיתיות</button>
@@ -1259,8 +1357,10 @@ function startSession(reviewsOnly){
   const newWords=reviewsOnly?[]:WORDS.filter(x=>!s.cards[x.w])
     .sort((a,b)=>(b.pri||0)-(a.pri||0)||a.lv-b.lv)
     .slice(0,Math.max(0,dailyCap-startedToday));
+  /* 15.9 — כרטיס בקופסה 0 = "לא ידעתי" (או נפילה קשה). חוזר קודם דרך מסך הלמידה
+     ואז לבוחן, כמו מילה חדשה — לא ישר לבוחן שכבר נכשל בו. */
   sess.queue=[
-    ...due.map(w=>({word:WORDS.find(x=>x.w===w)||{w,t:'',ex:'',lv:0},isNew:false})),
+    ...due.map(w=>({word:WORDS.find(x=>x.w===w)||{w,t:'',ex:'',lv:0},isNew:false,needLearn:s.cards[w].b===0})),
     ...newWords.map(x=>({word:x,isNew:true,needLearn:true}))
   ];
   sess.i=0;sess.correct=0;sess.wrong=0;sess.newCount=newWords.length;sess.revCount=due.length;
@@ -1279,12 +1379,13 @@ function nextSessItem(){
 }
 function renderLearn(item){
   const w=item.word;
+  const again=!item.isNew;   // 15.9 — חזרה למסך הלמידה אחרי "לא יודע"
   app.innerHTML='<div class="card" style="text-align:center">'+
-    '<p class="sub">מילה חדשה · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
-    '<div class="en" style="font-size:2rem;font-weight:700;text-align:center">'+w.w+'</div>'+
+    '<p class="sub">'+(again?'🤷 לומדים מחדש':'מילה חדשה')+' · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
+    '<div class="wordline"><div class="en" style="font-size:2rem;font-weight:700;text-align:center;margin:14px 0">'+w.w+'</div>'+spk(w.w)+'</div>'+
     '<div style="font-size:1.3rem;font-weight:600;margin:6px 0">'+w.t+'</div>'+
-    '<div class="en" style="text-align:center;color:var(--muted);font-size:1rem">"'+w.ex+'"</div>'+
-    '<p class="note">קרא את המשפט, תגיד את המילה בקול — ואז נבדוק</p>'+
+    '<div class="en" style="text-align:center;color:var(--muted);font-size:1rem">"'+w.ex+'" '+spk(w.ex,true)+'</div>'+
+    '<p class="note">לחץ 🔊 ותגיד את המילה בקול — ואז נבדוק</p>'+
     '<button class="btn" onclick="learnDone()">הבנתי — תבחן אותי</button></div>';
 }
 function learnDone(){
@@ -1299,38 +1400,41 @@ function renderSessQuiz(item){
   // מילה עקשנית (3+ כישלונות) — היפוך כיוון: עברית→אנגלית (מחקר: הכיוון הקשה מחזק את שניהם)
   const s=srsLoad();const card=s.cards[w.w];
   const reverse=!item.isNew&&card&&(card.laps||0)>=3;
-  // מסיחים: מילים קרובות ברמה, מסוננות גם לפי המשמעות הראשונה (שלא ייכנס מסיח נרדף)
-  const firstT=x=>x.split(/[;,]/)[0].trim();
-  const cand=WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&Math.abs(x.lv-w.lv)<=1);
-  const pool=shuffle(cand).slice(0,3);
-  let opts=reverse?[w.w,...pool.map(x=>x.w)]:[w.t,...pool.map(x=>x.t)];
+  /* 15.9 — המסיחים עוברים ל-buildOptions: נכון · "אולי" מהמשפחה (near מהתוכן) ·
+     2 רחוקים. ⚠️ 15.9: לפני כן 3 מילים אקראיות ברמה ±1 — ששון: "שניים פוסלים בטוח". */
+  const nearAll=(S2[w.w]||[]).flatMap(x=>x.near||[]);
+  let opts=buildOptions(w,reverse?'reverse':'he',nearAll);
   sess.order=shuffle([0,1,2,3]);
   let stem=reverse
     ?'<div style="font-size:1.5rem;text-align:center;font-weight:700;margin:18px 0">'+w.t+'</div>'+
      '<p class="sub" style="text-align:center">🔁 מילה עקשנית — הפעם הפוך: איזו מילה באנגלית?</p>'
-    :'<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>';
+    :'<div class="wordline"><div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>'+spk(w.w)+'</div>';
   let optStyle=reverse?'direction:ltr;text-align:left;font-family:Georgia,serif':'direction:rtl;text-align:right;font-family:inherit';
   /* 4.8 — צורה שלישית לאותה מילה: בחזרות, חלק מהפעמים המילה מגיעה **בתוך משפט**
      ולא כתרגום. תרגום = זיהוי; משפט = שימוש. המבחן בודק את השני. לא על מילה חדשה
-     (עוד לא נלמדה) ולא על מילה עקשנית (שם ההיפוך חשוב יותר). */
-  const sv=(!item.isNew&&!reverse&&Math.random()<0.45)?sentFor(w):null;
+     (עוד לא נלמדה) ולא על מילה עקשנית (שם ההיפוך חשוב יותר).
+     15.9 — המשפט מתחלף בכל חזרה (card.si), ולכן הסיכוי עלה ל-55%. */
+  const sv=(!item.isNew&&!reverse&&Math.random()<0.55)?sentFor(w,card):null;
   if(sv){
     opts=sv.opts;
     stem=sentStem(sv,'📄 הפעם בתוך משפט — איזו מילה משלימה אותו?');
     optStyle='direction:ltr;text-align:left;font-family:Georgia,serif';
   }
+  sess.cur={sv,reverse};
   app.innerHTML='<div class="card">'+
     '<p class="sub">'+(item.isNew?'מילה חדשה':'חזרה')+' · '+(sess.i+1)+' מתוך '+sess.queue.length+'</p>'+
     stem+
     '<div class="opts">'+sess.order.map((oi,vi)=>
       '<button type="button" class="opt" style="'+optStyle+'" onclick="sessAnswer('+vi+','+oi+')">'+
       '<span class="letter">'+['א','ב','ג','ד'][vi]+'</span><span>'+opts[oi]+'</span></button>').join('')+
-    '</div></div>';
+    '</div>'+
+    '<div class="actions" style="justify-content:center"><button class="btn ghost" onclick="sessUnknown()">🤷 לא יודע את המילה</button></div></div>';
   sess._opts=opts;
 }
 function sessAnswer(vi,oi){
   const item=sess.queue[sess.i];const w=item.word;
   const right=oi===0;
+  const sv=sess.cur&&sess.cur.sv;
   const s=srsLoad();const today=todayKey();
   if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
   if(right){
@@ -1340,14 +1444,15 @@ function sessAnswer(vi,oi){
     else{c.b=Math.min(6,c.b+1);s.log[today].r++;}
     const d=new Date();d.setDate(d.getDate()+INTERVALS[c.b]);
     c.due=dayKey(d);
+    if(sv)c.si=sv.si;   // 15.9 — המשפט שנראה עכשיו; בחזרה הבאה יגיע הבא
     s.cards[w.w]=c;srsSave(s);
     sess.i++;
     // פידבק קצר
-    flashFeedback(true,w,()=>nextSessItem());
+    flashFeedback(true,w,()=>nextSessItem(),sv);
   }else{
     sess.wrong++;s.log[today].w++;
     if(!item.isNew){
-      const c=s.cards[w.w];if(c){c.b=1;c.laps=(c.laps||0)+1;
+      const c=s.cards[w.w];if(c){c.b=1;c.laps=(c.laps||0)+1;if(sv)c.si=sv.si;
         const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);}
     }
     // ⚠️ 4.8: השמירה הייתה רק בתוך ה-if — מי שטעה במילה חדשה בלבד ביום מסוים,
@@ -1356,16 +1461,53 @@ function sessAnswer(vi,oi){
     // המילה חוזרת לתור — עוד 3 פריטים
     const it=sess.queue.splice(sess.i,1)[0];it.isNew=item.isNew;
     sess.queue.splice(Math.min(sess.i+3,sess.queue.length),0,it);
-    flashFeedback(false,w,()=>nextSessItem());
+    flashFeedback(false,w,()=>nextSessItem(),sv);
   }
 }
-function flashFeedback(ok,w,then){
+/* 15.9 — "🤷 לא יודע את המילה". הבקשה: "שתדע שאני לא יודע את המילה ונעבוד עליה יותר".
+   פסיקת הלוח: נספר כטעות בדיוק (אחרת זה מילוט נוח מניחוש) — אבל במונה נפרד (unk),
+   הקופסה יורדת ל-0, והמילה חוזרת דרך **מסך הלמידה** ולא ישר לבוחן. */
+function sessUnknown(){
+  const item=sess.queue[sess.i];const w=item.word;
+  const sv=sess.cur&&sess.cur.sv;
+  const s=srsLoad();const today=todayKey();
+  if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
+  sess.wrong++;s.log[today].w++;
+  const c=s.cards[w.w]||{b:0,laps:0};
+  c.b=0;c.laps=(c.laps||0)+1;c.unk=(c.unk||0)+1;
+  const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);
+  if(sv)c.si=sv.si;
+  // מילה חדשה: הכרטיס נשמר עם b=0 (בלי seen) — אם יצא באמצע, מחר היא תחזור דרך הלמידה
+  s.cards[w.w]=c;srsSave(s);
+  const it=sess.queue.splice(sess.i,1)[0];it.needLearn=true;
+  sess.queue.splice(Math.min(sess.i+2,sess.queue.length),0,it);
+  flashFeedback('unk',w,()=>nextSessItem(),sv);
+}
+// מילוי החור במשפט — כולל מילים כפולות ("so... that" = שני חורים)
+function fillBlanks(s,word,wrap){
+  const parts=String(word).split('...').map(x=>x.trim());let i=0;
+  return s.replace(/___/g,()=>{const p=parts[Math.min(i,parts.length-1)];i++;return wrap?wrap(p):p;});
+}
+/* המשפט שמוצג בפידבק + לשונית התרגום. sv = שאלת המשפט שנענתה; בלי sv (מצב תרגום)
+   מציגים משפט מהתוכן החדש אם יש, אחרת את משפט הדוגמה הישן (בלי לשונית — אין לו תרגום). */
+function feedbackSentence(w,sv){
+  let s,he;
+  if(sv){s=sv.s;he=sv.he||'';}
+  else{const a=S2[w.w];if(a&&a.length){s=a[0].s;he=a[0].he||'';}else{s=w.ex||'';he='';}}
+  if(!s)return '';
+  const en=fillBlanks(s,w.w);
+  return '<div class="en" style="text-align:center;color:var(--muted)">'+fillBlanks(s,w.w,p=>'<b style="color:var(--good)">'+p+'</b>')+'</div>'+trTab(en,he);
+}
+function flashFeedback(ok,w,then,sv){
+  const unk=ok==='unk';
   app.innerHTML='<div class="card" style="text-align:center">'+
-    (ok?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ לא בדיוק</h2>')+
-    '<div class="en" style="font-size:1.6rem;text-align:center;font-weight:700">'+w.w+'</div>'+
+    (unk?'<h2 style="color:var(--warn)">🤷 נלמד אותה מחדש</h2>'
+      :ok?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ לא בדיוק</h2>')+
+    '<div class="wordline"><div class="en" style="font-size:1.6rem;text-align:center;font-weight:700">'+w.w+'</div>'+spk(w.w)+'</div>'+
     '<div style="font-size:1.15rem;font-weight:600">'+w.t+'</div>'+
-    '<div class="en" style="text-align:center;color:var(--muted)">"'+w.ex+'"</div>'+
-    (ok?'':'<p class="note">המילה תחזור עוד כמה שאלות — עד שתשב</p>')+
+    feedbackSentence(w,sv)+
+    (unk?'<p class="note">עוד רגע היא חוזרת עם מסך הלמידה, ואז נבדוק שוב</p>'
+      :ok?'':'<p class="note">המילה תחזור עוד כמה שאלות — עד שתשב</p>')+
     '<button class="btn" style="margin-top:10px" onclick="_ff()">המשך ←</button></div>';
   window._ff=then;
   // מקש Enter ממשיך
@@ -1516,13 +1658,12 @@ function startLevelExam(l){
 }
 function renderLvexQ(){
   const w=lvex.qs[lvex.i];
-  const firstT=x=>x.split(/[;,]/)[0].trim();
-  const pool=shuffle(WORDS.filter(x=>x.w!==w.w&&x.t!==w.t&&firstT(x.t)!==firstT(w.t)&&Math.abs(x.lv-w.lv)<=1)).slice(0,3);
-  const opts=[w.t,...pool.map(x=>x.t)];
+  // 15.9 — אותו מנוע מסיחים כמו בבוחן היומי (היו כאן 3 שורות זהות)
+  const opts=buildOptions(w,'he',(S2[w.w]||[]).flatMap(x=>x.near||[]));
   lvex.order=shuffle([0,1,2,3]);
   app.innerHTML='<div class="card">'+
     '<p class="sub">🏅 מבחן רמה '+lvex.l+' · שאלה '+(lvex.i+1)+' מתוך '+lvex.qs.length+' · צריך 90% לעבור</p>'+
-    '<div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>'+
+    '<div class="wordline"><div class="en" style="font-size:1.9rem;text-align:center;font-weight:700;margin:18px 0">'+w.w+'</div>'+spk(w.w)+'</div>'+
     '<div class="opts">'+lvex.order.map((oi,vi)=>
       '<button type="button" class="opt" style="direction:rtl;text-align:right;font-family:inherit" onclick="lvexAnswer('+vi+')">'+
       '<span class="letter">'+['א','ב','ג','ד'][vi]+'</span><span>'+opts[oi]+'</span></button>').join('')+
@@ -1780,11 +1921,28 @@ const SENT={
  'voice':{s:"Employees are encouraged to ___ their concerns at the monthly staff meeting.",d:["shrink","conceal","postpone"]},
  'unrest':{s:"Rising food prices led to months of political ___ across the region.",d:["absence","fortune","era"]}
 };
+/* 15.9 — כל שאלות-המשפט שיש למילה, בסדר קבוע: קודם התוכן החדש (sentences.js, עם
+   תרגום ו-near), ואז המשפט הישן מ-SENT (מסיחים ידניים, תרגום מ-SENT_HE). */
+function sentAll(w){
+  const out=[];
+  for(const it of (S2[w.w]||[]))out.push({s:it.s,he:it.he||'',near:it.near||[]});
+  const old=SENT[w.w];
+  if(old)out.push({s:old.s,he:SENT_HE_[w.w]||'',fixed:old.d});
+  return out;
+}
 /* מחזיר שאלת-משפט למילה, או null אם אי אפשר לבנות אחת.
+   15.9 — המשפט **מתחלף**: card.si = האינדקס שנראה בפעם הקודמת, לוקחים את הבא.
+   ⚠️ לפני כן היה משפט אחד לכל מילה — ששון אחרי חודש: "אני זוכר אותם בע"פ".
    גיבוי למילים שעדיין לא נכתב להן משפט ייעודי: משפט הדוגמה שכבר קיים בכרטיס. */
-function sentFor(w){
-  const it=SENT[w.w];
-  if(it)return {s:it.s,opts:[w.w,...it.d],authored:true};
+function sentFor(w,card){
+  const all=sentAll(w);
+  if(all.length){
+    const last=(card&&typeof card.si==='number')?card.si:-1;
+    const idx=(last+1)%all.length;
+    const it=all[idx];
+    const opts=it.fixed?[w.w,...it.fixed]:buildOptions(w,'sent',it.near);
+    return {s:it.s,he:it.he,opts,authored:true,si:idx};
+  }
   if(!w.ex)return null;
   // הסתרת המילה במשפט הדוגמה — כולל הטיות: sit→sits · deny→denied · admit→admitted
   const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -1796,74 +1954,93 @@ function sentFor(w){
   const cand=WORDS.filter(x=>x.w!==w.w&&Math.abs(x.lv-w.lv)<=1&&!/\.\.\./.test(x.w));
   const pool=shuffle(cand).slice(0,3);
   if(pool.length<3)return null;
-  return {s:w.ex.replace(re,'___'),opts:[w.w,...pool.map(x=>x.w)],authored:false};
+  return {s:w.ex.replace(re,'___'),he:'',opts:[w.w,...pool.map(x=>x.w)],authored:false,si:-1};
 }
 function sentStem(q,note){
   return (note?'<p class="sub">'+note+'</p>':'')+
     '<div class="en">'+q.s.replace(/___/g,'<span class="blank">&nbsp;</span>')+'</div>';
 }
 
-/* מצב עצמאי: תרגול משפטים על המילים שכבר נלמדו (ברירת מחדל — של היום) */
-const wsent={queue:[],i:0,correct:0,wrong:0,order:[],opts:[]};
-function startWordSent(todayOnly){
+/* מצב עצמאי: תרגול משפטים על המילים שכבר נלמדו (ברירת מחדל — של היום).
+   15.9 — גם מיני-סשן ממסך אוצר המילים: list = רשימת מילים מפורשת, title = כותרת.
+   רשימה של עד 3 מילים ⇒ **כל** המשפטים של כל מילה (לתרגל מילה אחת לעומק). */
+const wsent={queue:[],i:0,correct:0,wrong:0,order:[],opts:[],title:'',back:'intro'};
+function startWordSent(todayOnly,list,title){
   document.getElementById('topbar').style.visibility='hidden';
   const s=srsLoad();
-  let words=WORDS.filter(x=>s.cards[x.w]);           // רק מילים שנלמדו
-  if(todayOnly){
+  let words=list?list.slice():WORDS.filter(x=>s.cards[x.w]);   // רק מילים שנלמדו
+  if(todayOnly&&!list){
     const t=todayKey();
     const fresh=words.filter(x=>s.cards[x.w].seen===t);
     if(fresh.length>=5)words=fresh;                   // המילים של היום, אם יש מספיק
   }
   /* סדר: קודם מילים שכבר נכשלת בהן (laps), אחר-כך אקראי. אין טעם לתרגל
      בהקשר דווקא את מה שכבר יושב. */
-  const s2=srsLoad();
   const ordered=shuffle(words.slice()).sort((a,b)=>
-    ((s2.cards[b.w]&&s2.cards[b.w].laps)||0)-((s2.cards[a.w]&&s2.cards[a.w].laps)||0));
+    ((s.cards[b.w]&&s.cards[b.w].laps)||0)-((s.cards[a.w]&&s.cards[a.w].laps)||0));
   const q=[];
+  const deep=list&&list.length<=3;
   for(const w of ordered){
-    const it=sentFor(w);
-    if(it){q.push({word:w,q:it});}
-    if(q.length>=20)break;
+    if(deep){
+      sentAll(w).forEach((it,i)=>q.push({word:w,q:{s:it.s,he:it.he,si:i,opts:it.fixed?[w.w,...it.fixed]:buildOptions(w,'sent',it.near)}}));
+      if(!sentAll(w).length){const it=sentFor(w,s.cards[w.w]);if(it)q.push({word:w,q:it});}
+    }else{
+      const it=sentFor(w,s.cards[w.w]);
+      if(it)q.push({word:w,q:it});
+      if(q.length>=20)break;
+    }
   }
   if(!q.length){
     app.innerHTML='<div class="card" style="text-align:center"><h2>עוד אין מספיק מילים</h2>'+
-      '<p class="sub">התרגול הזה בנוי מהמילים שכבר למדת. תעשה את מנת המילים של היום ותחזור לכאן.</p>'+
-      '<button class="btn" onclick="intro()">חזרה</button></div>';
+      '<p class="sub">'+(list?'למילים האלה עוד אין משפטים.':'התרגול הזה בנוי מהמילים שכבר למדת. תעשה את מנת המילים של היום ותחזור לכאן.')+'</p>'+
+      '<button class="btn" onclick="'+(list?'showVocab()':'intro()')+'">חזרה</button></div>';
     return;
   }
   wsent.queue=q;wsent.i=0;wsent.correct=0;wsent.wrong=0;
+  wsent.title=title||'משפטים על המילים שלי';wsent.back=list?'showVocab':'intro';
   renderWordSent();
 }
 function renderWordSent(){
   const item=wsent.queue[wsent.i];
   wsent.order=shuffle([0,1,2,3]);wsent.opts=item.q.opts;
   app.innerHTML='<div class="card">'+
-    '<p class="sub">משפטים על המילים שלי · '+(wsent.i+1)+' מתוך '+wsent.queue.length+'</p>'+
+    '<p class="sub">'+wsent.title+' · '+(wsent.i+1)+' מתוך '+wsent.queue.length+'</p>'+
     sentStem(item.q,'💡 קרא את כל המשפט קודם, ורק אז תסתכל על התשובות.')+
     '<div class="opts">'+wsent.order.map((oi,vi)=>
       '<button type="button" class="opt" onclick="wsentAnswer('+vi+')">'+
       '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+item.q.opts[oi]+'</span></button>').join('')+
-    '</div></div>';
+    '</div>'+
+    '<div class="actions" style="justify-content:center"><button class="btn ghost" onclick="wsentAnswer(-1)">🤷 לא יודע את המילה</button></div></div>';
 }
 function wsentAnswer(vi){
   const item=wsent.queue[wsent.i];
-  const right=wsent.order[vi]===0;
+  const unk=vi<0;
+  const right=!unk&&wsent.order[vi]===0;
   const s=srsLoad();const today=todayKey();
   if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
+  const c=s.cards[item.word.w];
+  if(c&&typeof item.q.si==='number'&&item.q.si>=0)c.si=item.q.si;   // 15.9 — המשפט הזה נראה; הבא בתור
   if(right){wsent.correct++;s.log[today].c++;}
   else{
     wsent.wrong++;s.log[today].w++;
     // ⚠️ טעות במשפט = המילה לא באמת יושבת. מחזירים אותה לחזרה מחר, בלי לאפס לגמרי.
-    const c=s.cards[item.word.w];
-    if(c){c.b=Math.max(1,Math.min(c.b,2));c.laps=(c.laps||0)+1;
+    // 15.9 — "לא יודע" = קופסה 0 + מונה unk: מחר תחזור דרך מסך הלמידה.
+    if(c){
+      if(unk){c.b=0;c.unk=(c.unk||0)+1;}else c.b=Math.max(1,Math.min(c.b,2));
+      c.laps=(c.laps||0)+1;
       const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);}
   }
   srsSave(s);
+  const w=item.word;
+  const en=fillBlanks(item.q.s,w.w);
   app.innerHTML='<div class="card">'+
-    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ התשובה: '+item.q.opts[0]+'</h2>')+
-    '<div class="en">'+item.q.s.replace(/___/g,'<b style="color:var(--good)">'+item.q.opts[0]+'</b>')+'</div>'+
-    '<div style="font-size:1.1rem;font-weight:600;margin-top:8px">'+item.word.w+' — '+item.word.t+'</div>'+
-    (right?'':'<p class="note">המילה תחזור אליך מחר בחזרות</p>')+
+    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>'
+      :unk?'<h2 style="color:var(--warn)">🤷 התשובה: '+item.q.opts[0]+'</h2>'
+      :'<h2 style="color:var(--bad)">✗ התשובה: '+item.q.opts[0]+'</h2>')+
+    '<div class="en">'+fillBlanks(item.q.s,w.w,p=>'<b style="color:var(--good)">'+p+'</b>')+'</div>'+
+    '<div class="wordline" style="justify-content:flex-start"><span style="font-size:1.1rem;font-weight:600">'+w.w+' — '+w.t+'</span>'+spk(w.w,true)+'</div>'+
+    trTab(en,item.q.he)+
+    (right?'':unk?'<p class="note">מחר היא תחזור אליך עם מסך הלמידה, ואז בוחן</p>':'<p class="note">המילה תחזור אליך מחר בחזרות</p>')+
     '<div class="actions"><button class="btn" onclick="wsentNext()">'+
     (wsent.i<wsent.queue.length-1?'הבא ←':'סיום')+'</button></div></div>';
 }
@@ -1877,8 +2054,56 @@ function wsentNext(){
       '<p class="sub">'+(pct>=80?'המילים האלה כבר יושבות גם בתוך משפט — זה בדיוק מה שהמבחן בודק. 🎉'
         :pct>=60?'בכיוון. המילים שטעית בהן יחזרו אליך מחר בחזרות.'
         :'זה בדיוק הפער שסוגרים כאן — לזהות מילה בהקשר קשה יותר מלתרגם אותה. המילים האלה יחזרו מחר.')+'</p>'+
-      '<button class="btn ghost" onclick="intro()">חזרה למסך הבית</button></div>';
+      '<button class="btn ghost" onclick="'+wsent.back+'()">'+(wsent.back==='intro'?'חזרה למסך הבית':'→ חזרה לאוצר המילים')+'</button></div>';
   }else renderWordSent();
+}
+
+/* ============ 15.9 — 📚 אוצר המילים שלי ============
+   הבקשה: "ללכת לכל אוצר המילים שעשיתי ולראות מה אני כבר יודע ומה לא, ואם אני רוצה
+   לתרגל את המשפט". הקבוצה נקבעת בסדר הזה — חלשה גוברת על קופסה גבוהה. */
+function wordGroup(c){
+  if(!c)return 'new';
+  if((c.unk||0)>0||(c.laps||0)>=3)return 'weak';
+  return c.b>=4?'strong':'learning';
+}
+function showVocab(){
+  document.getElementById('topbar').style.visibility='hidden';
+  const s=srsLoad();
+  const groups={weak:[],learning:[],strong:[],new:[]};
+  for(const w of WORDS)groups[wordGroup(s.cards[w.w])].push(w);
+  const row=w=>{const c=s.cards[w.w]||{};
+    const meta=[];
+    if(typeof c.b==='number')meta.push('קופסה '+c.b);
+    if(c.laps)meta.push(c.laps+' נפילות');
+    if(c.unk)meta.push('🤷 '+c.unk);
+    if(sentAll(w).length)meta.push(sentAll(w).length+' משפטים');
+    return '<div class="vrow" data-k="'+escA(w.w+' '+w.t)+'"><span class="vw">'+w.w+'</span>'+spk(w.w,true)+
+      '<span class="vt">'+w.t+(meta.length?'<br><span class="note">'+meta.join(' · ')+'</span>':'')+'</span>'+
+      '<button class="btn ghost" data-w="'+escA(w.w)+'" onclick="drillWord(this.getAttribute(\'data-w\'))">תרגל</button></div>';};
+  const grp=(key,title,open)=>'<details class="vgroup" data-g="'+key+'"'+(open?' open':'')+'><summary><span>'+title+'</span><span>'+groups[key].length+'</span></summary>'+
+    (groups[key].length?groups[key].map(row).join(''):'<p class="note">אין כרגע</p>')+'</details>';
+  app.innerHTML='<div class="card"><h1>📚 אוצר המילים שלי</h1>'+
+    '<p class="sub">'+WORDS.length+' מילים · ✅ '+groups.strong.length+' חזקות · 📚 '+groups.learning.length+' בתהליך · 🤷 '+groups.weak.length+' חלשות · ⬜ '+groups.new.length+' עוד לא נלמדו</p>'+
+    '<input class="vsearch" id="vq" placeholder="🔍 חיפוש — באנגלית או בעברית" oninput="vocabSearch(this.value)">'+
+    (groups.weak.length?'<button class="btn" style="width:100%;margin-top:10px" onclick="drillWeak()">🏋️ תרגל את כל החלשות ('+groups.weak.length+')</button>':'')+
+    grp('weak','🤷 חלשות — לא ידעתי / נפלו 3 פעמים ומעלה',true)+
+    grp('learning','📚 בתהליך')+grp('strong','✅ חזקות')+grp('new','⬜ עוד לא נלמדו')+
+    '<p class="note" style="margin-top:12px">"תרגל" = כל המשפטים של המילה, עם תרגום. 🔊 = לשמוע הגייה — אין קול? בדוק את מתג הצד באייפון.</p>'+
+    '<div class="actions"><button class="btn ghost" onclick="intro()">→ חזרה למסך הבית</button></div></div>';
+}
+function vocabSearch(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('.vrow').forEach(r=>{r.hidden=!!q&&!r.getAttribute('data-k').toLowerCase().includes(q);});
+  if(q)document.querySelectorAll('.vgroup').forEach(g=>{g.open=true;});
+}
+function drillWord(wname){
+  const w=WORDS.find(x=>x.w===wname);
+  if(w)startWordSent(false,[w],'📄 '+w.w);
+}
+function drillWeak(){
+  const s=srsLoad();
+  const list=WORDS.filter(w=>wordGroup(s.cards[w.w])==='weak');
+  startWordSent(false,list,'🏋️ החלשות שלי');
 }
 
 function startSCP(){
@@ -1905,6 +2130,7 @@ function scpAnswer(vi){
     (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ התשובה: '+q.o[0]+'</h2>')+
     '<div class="en">'+q.s.replace('___','<b style="color:var(--good)">'+q.o[0]+'</b>')+'</div>'+
     '<p><b>למה:</b> '+q.why+'</p>'+
+    trTab(q.s.replace('___',q.o[0]),SCP_HE_[scp.i]||'')+
     '<div class="actions"><button class="btn" onclick="scpNext()">'+
     (scp.i<SCP.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
 }
@@ -1983,9 +2209,11 @@ function showTransfer(){
   </div>`;
 }
 function exportProgress(btn){
-  // מייצאים רק את מצב המילים (SRS) — קומפקטי, כדי שוואטסאפ לא יחתוך.
-  // היסטוריית אבחונים נשארת במכשיר המקורי — לא נחוצה ללימוד היומי.
-  const data={srs:localStorage.getItem('amirnet_srs')||''};
+  // מייצאים את מצב המילים (SRS) + מבחני רמה + מדד השאלות האמיתיות — קומפקטי, כדי
+  // שוואטסאפ לא יחתוך. היסטוריית אבחונים נשארת במכשיר המקורי — לא נחוצה ללימוד היומי.
+  // 15.9 — levels/drills נוספו: לפני כן העברה בין מכשירים איבדה רמות שנסגרו.
+  const data={srs:localStorage.getItem('amirnet_srs')||'',
+    levels:localStorage.getItem('amirnet_levels')||'',drills:localStorage.getItem('amirnet_drills')||''};
   const code='AMIRNET1:'+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   // הקוד תמיד מוצג בתיבה — גם אם ההעתקה האוטומטית נחסמת, אפשר לסמן ולהעתיק ידנית
   const box=document.getElementById('impBox');
@@ -2010,6 +2238,8 @@ function importProgress(){
     if(data.srs)localStorage.setItem('amirnet_srs',data.srs);
     if(data.vocab)localStorage.setItem('amirnet_vocab',data.vocab);
     if(data.diag)localStorage.setItem('amirnet_diag',data.diag);
+    if(data.levels)localStorage.setItem('amirnet_levels',data.levels);
+    if(data.drills)localStorage.setItem('amirnet_drills',data.drills);
     impSay('✓ ההתקדמות יובאה בהצלחה! חוזר למסך הבית…',true);
     setTimeout(intro,1200);
   }catch(e){impSay('✗ הקוד חתוך או פגום — חזור למכשיר הראשון, העתק שוב ושלח מחדש (יכול להיות שוואטסאפ קיצר את ההודעה)',false);}
