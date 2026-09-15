@@ -155,6 +155,7 @@
 <!-- 15.9 — תוכן בלבד (משפטים, תרגומים, חלקי דיבר). נטען לפני הקוד; אם הקובץ חסר —
      הקוד ממשיך לעבוד עם משפטי ה-ex הישנים (ראה S2/WPOS למטה). -->
 <script src="sentences.js"></script>
+<script src="exams.js"></script>
 <script>
 'use strict';
 /* ============ בנק שאלות ============
@@ -380,6 +381,13 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
    ⚠️ sentences.js הוא קובץ שני בפריסה ידנית. אם נדחף index.html בלי sentences.js —
    SENT2 לא מוגדר; בלי ההגנה הזאת כל הדף היה מת. עם ההגנה — חוזרים למשפטי ה-ex. */
 const S2=(typeof SENT2!=='undefined')?SENT2:{};
+/* בחינות אמי"ר הרשמיות (exams.js). אותה הגנה — זה כבר הקובץ השלישי בפריסה, וחסר
+   אחד = דף מת אצל ששון. בלעדיו הבחנים חוזרים ל-19 השאלות הישנות בלבד. */
+const OFF=(typeof OFFICIAL!=='undefined')?OFFICIAL:null;
+/* ⚠️ 15.9 — רף הפטור. היה 75% לאורך חמישה שבועות, כהערכה שמעולם לא נמדדה.
+   מטבלת ההמרה הרשמית בחוברת (ציון גלם 0-81 → סולם 150-250): פטור = 234 = **73/81**.
+   🔑 הערה שסותרת ראיה = לבדוק, לא להאמין. */
+const PASS_PCT=90;
 const WPOS=(typeof WORD_POS!=='undefined')?WORD_POS:{};
 const SENT_HE_=(typeof SENT_HE!=='undefined')?SENT_HE:{};
 const SCP_HE_=(typeof SCP_HE!=='undefined')?SCP_HE:[];
@@ -1549,7 +1557,7 @@ const TIPS=[
   <li><b>אין קנס על ניחוש — תמיד תענה.</b> שאלה ריקה = טעות בטוחה. ניחוש אחרי פסילת 2 תשובות = 50% סיכוי.</li>
   <li><b>ההתחלה קריטית:</b> בשאלות הראשונות המערכת "מחליטה" באיזו רמה אתה. תהיה הכי מרוכז דווקא בהתחלה — אל תבזבז אותה על התארגנות.</li>
   <li><b>אל תנסה לנחש אם אתה מצליח:</b> אם השאלות נהיות קשות — זה סימן טוב! זה אומר שאתה עולה רמה. שאלה קשה = מחמאה מהמחשב. (נבחנת אמיתית: "הציון קפץ מ-112 ל-138 כשהפסקתי להילחץ מהאדפטיביות")</li>
-  <li><b>פטור ≈ 75% נכונות</b> (לפי טבלאות ההמרה הרשמיות). מותר לטעות ברבע מהשאלות ועדיין לקבל 134 — אתה לא צריך שלמות, אתה צריך יציבות.</li>
+  <li>🔴 <b>פטור = 73 מתוך 81 שאלות ≈ 90% נכונות.</b> נמדד 15.9 מטבלת ההמרה הרשמית בחוברת של המרכז הארצי (ציון גלם 73 → 234 = פטור). ⚠️ כאן היה כתוב "≈75%" — הערכה שלי שלא נמדדה, והיא הייתה נמוכה מדי ב-15 נקודות. מותר לטעות ב-8 שאלות מתוך 81, לא ב-20.</li>
   <li>רק ~23 שאלות נספרות. כל שאלה שווה הרבה — אין "עוד מלא שאלות אחר כך".</li></ul>`},
  {icon:"✏️",title:"השלמת משפטים — השיטה (12 שאלות, הכי הרבה במבחן)",
   body:`<p>הסדר הנכון, כל שאלה:</p>
@@ -1618,9 +1626,12 @@ function toggleTip(i){document.getElementById('tip'+i).classList.toggle('hidden'
 
 /* ============ מבחני רמה + המסלול שלי (שיטת LexiBoost מותאמת) ============ */
 /* מדד השאלות האמיתיות (4.8) — המשתמש עשה 11 שאלות נית"ב וקיבל 55%. מספר בודד
-   אינו מדד; מה שמלמד הוא **המגמה**. לכן כל ריצה על שאלות אמת נשמרת ומוצגת במסלול,
-   עם רף הפטור (~75%) כקו יעד. ⚠️ אותן שאלות חוזרות — עלייה בגלל שינון תיראה כאן
-   כמו התקדמות אמיתית; לכן ההמלצה במסך היא להריץ במרווחים של שבוע, לא כל יום. */
+   אינו מדד; מה שמלמד הוא **המגמה**. לכן כל ריצה על שאלות אמת נשמרת ומוצגת במסלול.
+   ~~⚠️ אותן שאלות חוזרות — עלייה בגלל שינון תיראה כאן כמו התקדמות אמיתית~~
+   ✅ **תוקן 15.9.** האזהרה הזאת עמדה בקוד חמישה שבועות בלי שתוקנה — מדד שבור
+   שמתועד כמדד שבור הוא עדיין מדד שבור. עכשיו 11/8 נדגמות מ-53/46 שאלות רשמיות.
+   ⚠️ והרף כאן היה רשום 75% — הערכה שלי שמעולם לא נמדדה. טבלת ההמרה הרשמית:
+   73/81 = 90% (PASS_PCT). ראה גם את ההערה ליד הקבוע. */
 function drillsLoad(){try{return JSON.parse(localStorage.getItem('amirnet_drills'))||[];}catch(e){return [];}}
 function drillSave(kind,correct,total){
   try{
@@ -1753,18 +1764,24 @@ function showPath(){
         const h=Math.max(6,Math.round(x.pct*0.7));
         return '<div style="display:inline-block;width:34px;margin:0 3px;text-align:center">'+
           '<div style="font-size:.72rem;font-variant-numeric:tabular-nums">'+x.pct+'%</div>'+
-          '<div style="height:'+h+'px;background:'+(x.pct>=75?'var(--good)':'var(--accent)')+';border-radius:3px 3px 0 0"></div>'+
+          '<div style="height:'+h+'px;background:'+(x.pct>=PASS_PCT?'var(--good)':'var(--accent)')+';border-radius:3px 3px 0 0"></div>'+
           '<div style="font-size:.62rem;color:var(--muted)">'+(x.kind==='scp'?'משפט':'ניסוח')+'</div>'+
           '<div style="font-size:.62rem;color:var(--muted)">'+x.date.slice(5).split('-').reverse().join('.')+'</div></div>';
       }).join('');
-      const gap=75-last.pct;
+      const gap=PASS_PCT-last.pct;
+      const nOld=dr.filter(x=>x.date<'2026-09-15').length;
       return '<div class="card"><h2>🎯 שאלות אמת — המדד שלי</h2>'+
         '<div style="display:flex;align-items:flex-end;justify-content:center;min-height:100px;padding:8px 0;border-bottom:2px dashed var(--line)">'+bars+'</div>'+
-        '<p class="sub" style="margin-top:10px">אחרון: <b>'+last.pct+'%</b> · שיא: '+best+'% · רף הפטור: <b>75%</b>'+
+        '<p class="sub" style="margin-top:10px">אחרון: <b>'+last.pct+'%</b> · שיא: '+best+'% · רף הפטור: <b>'+PASS_PCT+'%</b>'+
         (gap>0?' — חסרים '+gap+' נקודות':' — מעל הרף! 🎉')+'</p>'+
+        /* ⚠️ 15.9: שתי אזהרות שהוחלפו. (1) הרף היה 75% — הערכה שלי שלא נמדדה;
+           73/81 מטבלת ההמרה הרשמית = 90%. (2) "אותן שאלות בכל פעם" כבר לא נכון —
+           הבנק גדל ל-152/54 ונדגם מחדש בכל ריצה. */
+        '<p class="note">🔴 <b>עודכן 15.9:</b> רף הפטור כאן היה רשום 75% — זו הייתה הערכה שלי. מטבלת ההמרה הרשמית של המרכז הארצי: פטור = 73 מתוך 81 = <b>'+PASS_PCT+'%</b>. המדידות הישנות שלך נמדדו מול רף נמוך מדי.</p>'+
         '<p class="note">'+(dr.length<2
           ?'מדידה אחת אינה מגמה. הרץ שוב בעוד שבוע — בין לבין, המילים היומיות הן שמזיזות את המספר הזה.'
-          :'⚠️ אלה אותן שאלות בכל פעם, אז חלק מהעלייה הוא זיכרון. הרץ במרווח של שבוע, לא כל יום — אחרת המספר משקר.')+'</p></div>';
+          :(nOld?'⚠️ העמודות מלפני 15.9 רצו על 11/8 שאלות קבועות — חלק מהעלייה שם הוא שינון. מכאן ואילך השאלות נדגמות מ-'+(bank('sc').length+bank('rs').length)+' שאלות רשמיות, והמספר אמיתי.'
+                :'השאלות נדגמות מחדש בכל ריצה מ-'+(bank('sc').length+bank('rs').length)+' שאלות רשמיות — אין כאן שינון, המספר אמיתי.'))+'</p></div>';
     })()+
     '<div class="card"><h2>📊 הסימולציות שלי</h2>'+
     (sims.length?'<div style="display:flex;align-items:flex-end;justify-content:center;min-height:110px;padding:8px 0">'+simBars+'</div>':'<p class="sub">עוד אין — הסימולציה הראשונה מחכה בפאזה ב\'.</p>')+
@@ -1859,7 +1876,7 @@ const SCP=[ // c=0 תמיד
   o:["adapt to","assist in","collide with","descend from"],
   why:"adapt to surroundings = מסתגלים לסביבה. שינוי צבע = הסתגלות."}
 ];
-const scp={i:0,correct:0,order:[]};
+const scp={i:0,correct:0,order:[],qs:[]};
 /* ============ משפטים על המילים שלי (4.8) ============
    הבקשה של המשתמש: "למה לא לעשות משפטים שקשורים לאותן מילים ולשלב עם ההמשך".
    🔑 הנימוק: מילה שיודעים לתרגם ≠ מילה שמזהים בתוך משפט. במבחן אף פעם לא שואלים
@@ -2106,55 +2123,83 @@ function drillWeak(){
   startWordSent(false,list,'🏋️ החלשות שלי');
 }
 
+/* ⚠️ 15.9 — 11 ו-8 השאלות היו **קבועות**, וההערה מ-4.8 כבר הודתה שהמדד משקר:
+   "אותן שאלות חוזרות — עלייה בגלל שינון תיראה כאן כמו התקדמות אמיתית". זו בדיוק
+   התלונה של ששון על המשפטים ("אני זוכר אותם בעל פה"), רק שכאן היא פגעה במספר
+   שהוא מודד לפיו. מעכשיו: 11/8 נדגמות בכל ריצה מ-106 שאלות רשמיות מאומתות.
+   🔑 הבנק מורכב מ-OFFICIAL (verified בלבד) + 19 הישנות, שיש להן why/trap. */
+function bank(kind){
+  const out=[];
+  if(OFF)for(const e of Object.keys(OFF)){
+    if(!OFF[e].verified)continue;   // 2AM/3AM/5AM חולצו אך אין להן אורקל — לא נטענות
+    // noBlank = שאלת השלמה שהחור שלה לא שוחזר מה-PDF ⇒ אי אפשר לענות עליה
+    for(const q of (OFF[e][kind]||[]))if(!q.noBlank)out.push(q);
+  }
+  for(const q of (kind==='sc'?SCP:RSP))out.push(q);
+  return out;
+}
+function pickQs(kind,n){
+  const all=bank(kind);
+  return shuffle(all.slice()).slice(0,Math.min(n,all.length));
+}
 function startSCP(){
   document.getElementById('topbar').style.visibility='hidden';
-  scp.i=0;scp.correct=0;renderSCPQ();
+  scp.qs=pickQs('sc',11);scp.i=0;scp.correct=0;renderSCPQ();
+}
+// החור במשפטי החוברת הוא רווחים כפולים; אצל 11 הישנות הוא "___"
+function scpBlank(s,fill){
+  const rep=fill||'<span class="blank">&nbsp;</span>';
+  return /___/.test(s)?s.replace('___',rep):s.replace(/ {2,}/,' '+rep+' ');
 }
 function renderSCPQ(){
-  const q=SCP[scp.i];
+  const q=scp.qs[scp.i];
   scp.order=shuffle([0,1,2,3]);
   app.innerHTML='<div class="card">'+
-    '<p class="sub">השלמת משפטים — שאלות אמיתיות מבחינות המרכז הארצי · '+(scp.i+1)+' מתוך '+SCP.length+'</p>'+
+    '<p class="sub">השלמת משפטים — שאלות אמיתיות מבחינות המרכז הארצי · '+(scp.i+1)+' מתוך '+scp.qs.length+'</p>'+
     '<p class="sub">💡 קודם נסה לנחש את המילה בעברית, וקבע: חיובי או שלילי?</p>'+
-    '<div class="en">'+q.s.replace('___','<span class="blank">&nbsp;</span>')+'</div>'+
+    '<div class="en">'+scpBlank(q.s)+'</div>'+
     '<div class="opts">'+scp.order.map((oi,vi)=>
       '<button type="button" class="opt" onclick="scpAnswer('+vi+')">'+
       '<span class="letter">'+['A','B','C','D'][vi]+'</span><span>'+q.o[oi]+'</span></button>').join('')+
     '</div></div>';
 }
 function scpAnswer(vi){
-  const q=SCP[scp.i];
+  const q=scp.qs[scp.i];
   const right=scp.order[vi]===0;
   if(right)scp.correct++;
+  // why קיים רק ב-11 הישנות; ל-106 מהחוברת אין הסבר כתוב — ומוטב בלי מאשר מומצא
+  const he=(q.why&&SCP.indexOf(q)>=0)?SCP_HE_[SCP.indexOf(q)]||'':'';
   app.innerHTML='<div class="card">'+
     (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ התשובה: '+q.o[0]+'</h2>')+
-    '<div class="en">'+q.s.replace('___','<b style="color:var(--good)">'+q.o[0]+'</b>')+'</div>'+
-    '<p><b>למה:</b> '+q.why+'</p>'+
-    trTab(q.s.replace('___',q.o[0]),SCP_HE_[scp.i]||'')+
+    '<div class="en">'+scpBlank(q.s,'<b style="color:var(--good)">'+q.o[0]+'</b>')+'</div>'+
+    (q.why?'<p><b>למה:</b> '+q.why+'</p>':'')+
+    trTab(scpBlank(q.s,q.o[0]).replace(/<[^>]+>/g,''),he)+
+    (q.src?'<p class="note">מקור: בחינת '+q.src.split('/')[0]+' של המרכז הארצי</p>':'')+
     '<div class="actions"><button class="btn" onclick="scpNext()">'+
-    (scp.i<SCP.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
+    (scp.i<scp.qs.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
 }
 function scpNext(){
   scp.i++;
-  if(scp.i>=SCP.length){
-    const pct=Math.round(100*scp.correct/SCP.length);
-    drillSave('scp',scp.correct,SCP.length);
-    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+scp.correct+' מתוך '+SCP.length+' ('+pct+'%)</h2>'+
-      '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות! 🎉':'רף הפטור ~75% — המילים מהתרגול היומי יסגרו את זה, תחזור לכאן בעוד שבוע')+'</p>'+
+  if(scp.i>=scp.qs.length){
+    const pct=Math.round(100*scp.correct/scp.qs.length);
+    drillSave('scp',scp.correct,scp.qs.length);
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+scp.correct+' מתוך '+scp.qs.length+' ('+pct+'%)</h2>'+
+      '<p class="sub">'+(pct>=PASS_PCT?'מעל רף הפטור ('+PASS_PCT+'%) על שאלות אמיתיות! 🎉':'רף הפטור '+PASS_PCT+'% — המילים מהתרגול היומי יסגרו את זה, תחזור לכאן בעוד שבוע')+'</p>'+
+      '<p class="note">בפעם הבאה יגיעו שאלות אחרות — הבנק מכיל '+bank('sc').length+' שאלות.</p>'+
       '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
   }else renderSCPQ();
 }
 
-const rsp={i:0,correct:0,order:[]};
+const rsp={i:0,correct:0,order:[],qs:[]};
 function startRSP(){
   document.getElementById('topbar').style.visibility='hidden';
-  rsp.i=0;rsp.correct=0;renderRSPQ();
+  rsp.qs=pickQs('rs',8);rsp.i=0;rsp.correct=0;renderRSPQ();
 }
 function renderRSPQ(){
-  const q=RSP[rsp.i];
+  const q=rsp.qs[rsp.i];
   rsp.order=shuffle([0,1,2,3]);
   app.innerHTML='<div class="card">'+
-    '<p class="sub">ניסוח מחדש — שאלות אמיתיות מבחינות המרכז הארצי · '+(rsp.i+1)+' מתוך '+RSP.length+'</p>'+
+    '<p class="sub">ניסוח מחדש — שאלות אמיתיות מבחינות המרכז הארצי · '+(rsp.i+1)+' מתוך '+rsp.qs.length+'</p>'+
     '<p class="sub">בחר את המשפט הקרוב ביותר במשמעותו:</p>'+
     '<div class="en">'+q.s+'</div>'+
     '<div class="opts">'+rsp.order.map((oi,vi)=>
@@ -2163,27 +2208,35 @@ function renderRSPQ(){
     '</div></div>';
 }
 function rspAnswer(vi){
-  const q=RSP[rsp.i];
+  const q=rsp.qs[rsp.i];
   const oi=rsp.order[vi];
   const right=oi===0;
   if(right)rsp.correct++;
+  // trap (סיווג המלכודת) קיים רק ב-8 הישנות — ל-46 מהחוברת אין, ולא ממציאים
+  const tr=q.trap;
   app.innerHTML='<div class="card">'+
-    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>':'<h2 style="color:var(--bad)">✗ לא — נפלת במלכודת:</h2>')+
-    (right?'':'<p><b>'+q.trap[oi]+'</b></p>')+
+    (right?'<h2 style="color:var(--good)">✓ נכון!</h2>'
+      :'<h2 style="color:var(--bad)">✗ '+(tr?'לא — נפלת במלכודת:':'לא בדיוק')+'</h2>')+
+    (!right&&tr?'<p><b>'+tr[oi]+'</b></p>':'')+
     '<div class="en" style="font-size:.95rem;color:var(--muted)">'+q.s+'</div>'+
-    '<p class="sub">התשובה הנכונה:</p><div class="en" style="border-right:3px solid var(--good);padding-right:0;padding-left:10px;border-left:3px solid var(--good);border-right:none">'+q.o[0]+'</div>'+
-    '<p class="sub" style="margin-top:10px">המסיחים והמלכודות שלהם:</p><ul class="rules" style="font-size:.88rem">'+
-    q.trap.map((t,j)=>j===0?'':'<li><span class="en" style="font-size:.85rem">'+q.o[j]+'</span><br><b style="color:var(--bad)">← '+t+'</b></li>').join('')+
-    '</ul><div class="actions"><button class="btn" onclick="rspNext()">'+
-    (rsp.i<RSP.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
+    '<p class="sub">התשובה הנכונה:</p><div class="en" style="padding-left:10px;border-left:3px solid var(--good)">'+q.o[0]+'</div>'+
+    (tr?'<p class="sub" style="margin-top:10px">המסיחים והמלכודות שלהם:</p><ul class="rules" style="font-size:.88rem">'+
+      tr.map((t,j)=>j===0?'':'<li><span class="en" style="font-size:.85rem">'+q.o[j]+'</span><br><b style="color:var(--bad)">← '+t+'</b></li>').join('')+'</ul>'
+     :'<p class="sub" style="margin-top:10px">שלושת המסיחים:</p><ul class="rules" style="font-size:.88rem">'+
+      q.o.slice(1).map(o=>'<li><span class="en" style="font-size:.85rem">'+o+'</span></li>').join('')+'</ul>'+
+      '<p class="note">💡 חפש מה בדיוק שונה: כמת שהוחלף · היפוך כיוון · מידע שלא היה במקור.</p>')+
+    (q.src?'<p class="note">מקור: בחינת '+q.src.split('/')[0]+' של המרכז הארצי</p>':'')+
+    '<div class="actions"><button class="btn" onclick="rspNext()">'+
+    (rsp.i<rsp.qs.length-1?'שאלה הבאה ←':'סיום')+'</button></div></div>';
 }
 function rspNext(){
   rsp.i++;
-  if(rsp.i>=RSP.length){
-    const pct=Math.round(100*rsp.correct/RSP.length);
-    drillSave('rsp',rsp.correct,RSP.length);
-    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+rsp.correct+' מתוך '+RSP.length+' ('+pct+'%)</h2>'+
-      '<p class="sub">'+(pct>=75?'מעל רף הפטור (75%) על שאלות אמיתיות — מצוין!':'רף הפטור הוא ~75% — תחזור לתרגול הזה בעוד כמה ימים, המלכודות נלמדות')+'</p>'+
+  if(rsp.i>=rsp.qs.length){
+    const pct=Math.round(100*rsp.correct/rsp.qs.length);
+    drillSave('rsp',rsp.correct,rsp.qs.length);
+    app.innerHTML='<div class="card" style="text-align:center"><h2>🏁 '+rsp.correct+' מתוך '+rsp.qs.length+' ('+pct+'%)</h2>'+
+      '<p class="sub">'+(pct>=PASS_PCT?'מעל רף הפטור ('+PASS_PCT+'%) על שאלות אמיתיות — מצוין!':'רף הפטור הוא '+PASS_PCT+'% — תחזור לתרגול הזה בעוד כמה ימים, המלכודות נלמדות')+'</p>'+
+      '<p class="note">בפעם הבאה יגיעו שאלות אחרות — הבנק מכיל '+bank('rs').length+' שאלות.</p>'+
       '<button class="btn" onclick="intro()">חזרה למסך הבית</button></div>';
   }else renderRSPQ();
 }

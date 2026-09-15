@@ -6,6 +6,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm');
 const dir=__dirname;
 const html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
 const content=fs.readFileSync(path.join(dir,'sentences.js'),'utf8');
+const exams=fs.readFileSync(path.join(dir,'exams.js'),'utf8');
 const main=html.match(/<script>\s*([\s\S]*?)<\/script>\s*$/)[1];
 
 // DOM מינימלי
@@ -31,6 +32,7 @@ sandbox.globalThis=sandbox;
 vm.createContext(sandbox);
 const run=(code,name)=>{try{vm.runInContext(code,sandbox,{filename:name});}catch(e){console.log('🔴 '+name+': '+e.message);process.exit(1);}};
 run(content,'sentences.js');
+run(exams,'exams.js');
 run(main,'index.html');
 let fails=0;
 const step=(name,fn)=>{try{fn();const h=els.app.innerHTML;if(!h||h.length<50)throw new Error('המסך ריק');console.log('✅ '+name+' ('+h.length+' תווים)');}catch(e){fails++;console.log('🔴 '+name+': '+e.message);}};
@@ -64,7 +66,44 @@ step('סשן יומי עם חזרות (משפט/תרגום/היפוך)',()=>{cal
     else break;}
 });
 step('מבחן רמה',()=>{call('startLevelExam(2)');if(!/lvexAnswer/.test(els.app.innerHTML))throw new Error('לא נפתח');});
-step('שאלות אמת — השלמה + לשונית',()=>{call('startSCP()');call('scpAnswer(0)');if(!/details class="tr"/.test(els.app.innerHTML))throw new Error('אין לשונית תרגום');});
+step('שאלות אמת — השלמה',()=>{call('startSCP()');if(!/scpAnswer/.test(els.app.innerHTML))throw new Error('לא נפתח');call('scpAnswer(0)');});
+/* ⚠️ 15.9 — הלב של הסבב: השאלות חייבות **להתחלף** בין ריצות. עד היום הן היו
+   קבועות, ולכן "המדד שלי" מדד שינון. */
+step('השאלות מתחלפות בין ריצות',()=>{
+  const sig=()=>call('startSCP()')||call('scp.qs.map(q=>q.s).join("|")');
+  const a=sig(),b=sig(),c=sig();
+  if(a===b&&b===c)throw new Error('אותן 11 שאלות בשלוש ריצות — הדגימה לא עובדת');
+  els.app.innerHTML='ok — 3 ריצות, '+new Set([a,b,c]).size+' קבוצות שונות'+' '.repeat(50);
+});
+step('בנק השאלות נטען מ-exams.js',()=>{
+  // צפוי: 1AM+4AM מאומתות ועם חור (19+23) + 11 הישנות = 53 · ניסוח (18+20)+8 = 46
+  const n=call('bank("sc").length'),m=call('bank("rs").length');
+  if(n!==53||m!==46)throw new Error('בנק לא כצפוי: sc='+n+' (צפוי 53) rs='+m+' (צפוי 46)');
+  // שאלת השלמה בלי חור = אי אפשר לענות עליה. אסור שתגיע למסך.
+  const nb=call('bank("sc").filter(q=>!/___/.test(q.s)).length');
+  if(nb)throw new Error(nb+' שאלות השלמה בלי חור דלפו לבנק');
+  // 2AM/3AM/5AM לא מאומתות — אסור שייכנסו
+  const leak=call('bank("sc").concat(bank("rs")).filter(q=>q.src&&/2AM|3AM|5AM/.test(q.src)).length');
+  if(leak)throw new Error(leak+' שאלות מבחינות לא־מאומתות דלפו לבנק');
+  els.app.innerHTML='ok sc='+n+' rs='+m+' · אין דליפה מ-2AM/3AM/5AM'+' '.repeat(40);
+});
+step('שאלה בלי why/trap — פידבק תקין',()=>{
+  // שאלה מהחוברת אין לה why; ודא שאין "undefined" על המסך
+  call('scp.qs=[bank("sc").find(q=>q.src&&!q.why)];scp.i=0;scp.correct=0;renderSCPQ()');
+  call('scpAnswer(0)');
+  if(/undefined/.test(els.app.innerHTML))throw new Error('undefined במסך הפידבק');
+  if(!/מקור: בחינת/.test(els.app.innerHTML))throw new Error('לא מצוין המקור');
+  call('rsp.qs=[bank("rs").find(q=>q.src&&!q.trap)];rsp.i=0;rsp.correct=0;renderRSPQ()');
+  call('rspAnswer(1)');
+  if(/undefined/.test(els.app.innerHTML))throw new Error('undefined בניסוח מחדש');
+});
+step('רף הפטור 90% בכל המסכים',()=>{
+  if(call('PASS_PCT')!==90)throw new Error('PASS_PCT='+call('PASS_PCT'));
+  call('drillSave("scp",8,11)');call('showPath()');
+  const h=els.app.innerHTML;
+  if(!/90%/.test(h))throw new Error('המסלול לא מציג 90%');
+  if(/רף הפטור: <b>75%/.test(h))throw new Error('עדיין מוצג רף 75%');
+});
 step('ייצוא/ייבוא',()=>{call('showTransfer()');call('exportProgress({textContent:""})');const v=els.impBox.value;if(!/^AMIRNET1:/.test(v))throw new Error('אין קוד');
   const data=JSON.parse(Buffer.from(v.slice(9),'base64').toString('utf8'));if(!('levels' in data)||!('drills' in data))throw new Error('הייצוא בלי levels/drills');});
 // מנוע המסיחים — מבנה 2/1/1 על מילים עם near
