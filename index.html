@@ -2256,32 +2256,63 @@ function rspNext(){
 }
 
 /* ============ גיבוי / העברת התקדמות בין מכשירים ============ */
+/* ⚠️ 24.9: העתק-הדבק של קוד ארוך נכשל לששון בין אייפון לאייפד ("ניסיתי להעתיק, זה לא עשה כלום").
+   ⇒ הדרך הראשית היא קישור: כפתור שיתוף (AirDrop/וואטסאפ) → פתיחת הקישור במכשיר השני → אישור אחד.
+   הקוד הידני נשאר כגיבוי. */
 function showTransfer(){
   document.getElementById('topbar').style.visibility='hidden';
   app.innerHTML=`
   <div class="card">
     <h1>🔄 גיבוי / העברת התקדמות</h1>
-    <p class="sub">ההתקדמות נשמרת בכל מכשיר בנפרד. כדי להעביר: העתק כאן קוד במכשיר הישן → הדבק במכשיר החדש.</p>
-    <h2>ייצוא (מהמכשיר הזה)</h2>
-    <p class="sub">מעתיק את כל ההתקדמות שלך כקוד — שלח לעצמך בוואטסאפ ופתח במכשיר השני.</p>
-    <button class="btn" onclick="exportProgress(this)">📤 העתק קוד התקדמות</button>
-    <h2 style="margin-top:22px">ייבוא (אל המכשיר הזה)</h2>
-    <p class="sub">הדבק כאן קוד שהעתקת ממכשיר אחר. ⚠️ זה מחליף את ההתקדמות במכשיר הזה.</p>
+    <p class="sub">ההתקדמות נשמרת בכל מכשיר בנפרד. ההעברה היא חד-פעמית — אחריה ממשיכים לתרגל במכשיר החדש.</p>
+    <h2>שליחה (מהמכשיר הזה)</h2>
+    <p class="sub">שולח קישור. פתח אותו <b>בספארי</b> במכשיר השני, ושם תאשר את הייבוא. הכי פשוט: AirDrop.</p>
+    <button class="btn" onclick="shareProgress(this)">📲 שלח התקדמות למכשיר אחר</button>
+    <div id="shareMsg" class="sub" style="margin-top:8px"></div>
+    <h2 style="margin-top:22px">קבלה (אל המכשיר הזה)</h2>
+    <p class="sub">אם שלחת קישור — פשוט פתח אותו כאן. אם העתקת קוד — לחץ "הדבק" או הדבק בתיבה. ⚠️ זה מחליף את ההתקדמות במכשיר הזה.</p>
     <textarea id="impBox" style="width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:10px;font-family:monospace;direction:ltr" placeholder="AMIRNET1:..."></textarea>
     <div id="impMsg" style="margin-top:10px;font-weight:600"></div>
     <div class="actions">
-      <button class="btn" onclick="importProgress()">📥 ייבא לכאן</button>
+      <button class="btn" onclick="pasteAndImport()">📋 הדבק וייבא</button>
+      <button class="btn ghost" onclick="importProgress()">📥 ייבא מהתיבה</button>
+      <button class="btn ghost" onclick="exportProgress(this)">📤 העתק קוד (ידני)</button>
       <button class="btn ghost" onclick="intro()">→ חזרה</button>
     </div>
   </div>`;
 }
-function exportProgress(btn){
+function progressCode(){
   // מייצאים את מצב המילים (SRS) + מבחני רמה + מדד השאלות האמיתיות — קומפקטי, כדי
   // שוואטסאפ לא יחתוך. היסטוריית אבחונים נשארת במכשיר המקורי — לא נחוצה ללימוד היומי.
   // 15.9 — levels/drills נוספו: לפני כן העברה בין מכשירים איבדה רמות שנסגרו.
   const data={srs:localStorage.getItem('amirnet_srs')||'',
     levels:localStorage.getItem('amirnet_levels')||'',drills:localStorage.getItem('amirnet_drills')||''};
-  const code='AMIRNET1:'+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  return 'AMIRNET1:'+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+function progressLink(){
+  // base64url — בלי + / = , כדי שוואטסאפ/הודעות לא ישברו את הקישור באמצע
+  const b64=progressCode().slice(9).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return location.origin+location.pathname+'#import='+b64;
+}
+function shareProgress(btn){
+  const url=progressLink();
+  const msg=document.getElementById('shareMsg');
+  const say=t=>{if(msg)msg.textContent=t;};
+  if(navigator.share){
+    navigator.share({title:'העברת התקדמות — אמירנט',url}).then(
+      ()=>say('✓ נשלח. במכשיר השני: פתח את הקישור בספארי ולחץ "ייבא".'),
+      e=>{if(e&&e.name==='AbortError')return;copyLink();});
+  }else copyLink();
+  function copyLink(){
+    const box=document.getElementById('impBox');if(box)box.value=url;
+    const done=()=>{btn.textContent='✓ הקישור הועתק — שלח לעצמך ופתח במכשיר השני';};
+    const fail=()=>{btn.textContent='✗ ההעתקה נחסמה — הקישור מסומן בתיבה למטה, העתק ידנית';if(box){box.focus();box.select();}};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,()=>fallbackCopy(url,done,fail));
+    else fallbackCopy(url,done,fail);
+  }
+}
+function exportProgress(btn){
+  const code=progressCode();
   // הקוד תמיד מוצג בתיבה — גם אם ההעתקה האוטומטית נחסמת, אפשר לסמן ולהעתיק ידנית
   const box=document.getElementById('impBox');
   if(box){box.value=code;box.focus();box.select();}
@@ -2295,22 +2326,82 @@ function impSay(msg,ok){
   const el=document.getElementById('impMsg');
   if(el){el.textContent=msg;el.style.color=ok?'var(--good)':'var(--bad)';}
 }
-function importProgress(){
-  // ניקוי: רווחים וירידות שורה (וואטסאפ שובר שורות), חיפוש הקוד גם אם הודבק עם טקסט מסביב
-  const raw=(document.getElementById('impBox').value||'').replace(/\s+/g,'');
-  const at=raw.indexOf('AMIRNET1:');
-  if(at<0){impSay('✗ לא נמצא קוד שמתחיל ב-AMIRNET1: — ודא שהעתקת את כל ההודעה מוואטסאפ, מההתחלה ועד הסוף',false);return;}
-  try{
-    const data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(at+9)))));
-    if(data.srs)localStorage.setItem('amirnet_srs',data.srs);
-    if(data.vocab)localStorage.setItem('amirnet_vocab',data.vocab);
-    if(data.diag)localStorage.setItem('amirnet_diag',data.diag);
-    if(data.levels)localStorage.setItem('amirnet_levels',data.levels);
-    if(data.drills)localStorage.setItem('amirnet_drills',data.drills);
-    impSay('✓ ההתקדמות יובאה בהצלחה! חוזר למסך הבית…',true);
-    setTimeout(intro,1200);
-  }catch(e){impSay('✗ הקוד חתוך או פגום — חזור למכשיר הראשון, העתק שוב ושלח מחדש (יכול להיות שוואטסאפ קיצר את ההודעה)',false);}
+// מקבל קוד AMIRNET1:… או קישור #import=… (גם עם טקסט מסביב) ⇒ האובייקט, או null
+function decodeProgress(raw){
+  // ניקוי: רווחים וירידות שורה (וואטסאפ שובר שורות)
+  raw=(raw||'').replace(/\s+/g,'');
+  let b64=null;
+  const li=raw.indexOf('#import=');
+  if(li>=0)b64=decodeURIComponent(raw.slice(li+8)).replace(/-/g,'+').replace(/_/g,'/');
+  else{const at=raw.indexOf('AMIRNET1:');if(at>=0)b64=raw.slice(at+9);}
+  if(b64===null)return null;
+  while(b64.length%4)b64+='=';
+  const data=JSON.parse(decodeURIComponent(escape(atob(b64))));
+  if(!data||typeof data!=='object')throw new Error('bad');
+  return data;
+}
+function applyProgress(data){
+  if(data.srs)localStorage.setItem('amirnet_srs',data.srs);
+  if(data.vocab)localStorage.setItem('amirnet_vocab',data.vocab);
+  if(data.diag)localStorage.setItem('amirnet_diag',data.diag);
+  if(data.levels)localStorage.setItem('amirnet_levels',data.levels);
+  if(data.drills)localStorage.setItem('amirnet_drills',data.drills);
+  // אימות אמיתי: קוראים בחזרה (ספארי פרטי "מצליח" לכתוב ולא שומר)
+  if(data.srs&&localStorage.getItem('amirnet_srs')!==data.srs)throw new Error('write-verify');
+}
+function importProgress(raw){
+  if(raw===undefined)raw=document.getElementById('impBox').value;
+  let data;
+  try{data=decodeProgress(raw);}
+  catch(e){impSay('✗ הקוד חתוך או פגום — חזור למכשיר הראשון ושלח שוב',false);return;}
+  if(!data){impSay('✗ לא נמצא קוד או קישור העברה — ודא שהעתקת הכל, מההתחלה ועד הסוף',false);return;}
+  try{applyProgress(data);}
+  catch(e){impSay('✗ הדפדפן חסם שמירה. אם זו גלישה פרטית — פתח בחלון רגיל של ספארי',false);return;}
+  impSay('✓ ההתקדמות יובאה בהצלחה! חוזר למסך הבית…',true);
+  setTimeout(intro,1200);
+}
+function pasteAndImport(){
+  if(!(navigator.clipboard&&navigator.clipboard.readText)){
+    impSay('הדפדפן לא מאפשר הדבקה אוטומטית — לחץ לחיצה ארוכה בתיבה → "הדבק", ואז "ייבא מהתיבה"',false);return;}
+  navigator.clipboard.readText().then(t=>{
+    const box=document.getElementById('impBox');if(box)box.value=t;
+    importProgress(t);
+  },()=>impSay('ההדבקה נחסמה — לחץ לחיצה ארוכה בתיבה → "הדבק", ואז "ייבא מהתיבה"',false));
+}
+function progressSummary(srsRaw){
+  let s;try{s=JSON.parse(srsRaw||'');}catch(e){s=null;}
+  if(!s||!s.cards)return {words:0,days:0};
+  return {words:Object.keys(s.cards).length,days:Object.keys(s.log||{}).length};
+}
+// נפתח קישור העברה ⇒ מסך אישור (לא מייבאים בשקט — זה מחליף את מה שיש במכשיר)
+function checkImportLink(){
+  if(location.hash.indexOf('#import=')!==0)return false;
+  const link=location.href;
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  document.getElementById('topbar').style.visibility='hidden';
+  let data;
+  try{data=decodeProgress(link);}catch(e){data=null;}
+  if(!data){
+    app.innerHTML=`<div class="card"><h1>✗ הקישור פגום</h1>
+      <p class="sub">כנראה שהוא נחתך בדרך. חזור למכשיר הראשון ושלח שוב — עדיף ב-AirDrop.</p>
+      <div class="actions"><button class="btn" onclick="intro()">→ למסך הבית</button></div></div>`;
+    return true;
+  }
+  const inc=progressSummary(data.srs),cur=progressSummary(localStorage.getItem('amirnet_srs'));
+  app.innerHTML=`<div class="card">
+    <h1>📲 קיבלת התקדמות ממכשיר אחר</h1>
+    <p>בקישור: <b>${inc.words}</b> מילים · <b>${inc.days}</b> ימי תרגול</p>
+    <p class="sub">במכשיר הזה כרגע: ${cur.words} מילים · ${cur.days} ימי תרגול${cur.words?' — <b>יוחלף</b>':''}</p>
+    <div id="impMsg" style="margin-top:10px;font-weight:600"></div>
+    <div class="actions">
+      <button class="btn" id="impGo">📥 ייבא לכאן</button>
+      <button class="btn ghost" onclick="intro()">ביטול</button>
+    </div></div>`;
+  document.getElementById('impGo').onclick=()=>importProgress(link);
+  return true;
 }
 
-intro();
+if(!checkImportLink())intro();
+// הדף כבר פתוח והקישור שינה רק את ה-# ⇒ אין טעינה מחדש, ולכן מאזינים גם לשינוי
+if(typeof addEventListener==='function')addEventListener('hashchange',checkImportLink);
 </script>

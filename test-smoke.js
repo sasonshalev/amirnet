@@ -23,6 +23,8 @@ const sandbox={
   unescape:s=>s.replace(/%([0-9A-Fa-f]{2})/g,(m,h)=>String.fromCharCode(parseInt(h,16))),
   escape:s=>s.replace(/[^A-Za-z0-9@*_+\-./]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')),
   navigator:{},
+  location:{hash:'',href:'https://x/amirnet/',origin:'https://x',pathname:'/amirnet/',search:''},
+  history:{replaceState(){}},
   localStorage:{getItem:k=>(k in store?store[k]:null),setItem:(k,v)=>{store[k]=String(v);},removeItem:k=>{delete store[k];}},
   document:{getElementById:id=>els[id]||mkEl(),querySelectorAll:()=>[],addEventListener(){},removeEventListener(){},
     body:{appendChild(){},removeChild(){}},createElement:mkEl,execCommand:()=>true},
@@ -106,6 +108,11 @@ step('רף הפטור 90% בכל המסכים',()=>{
 });
 step('ייצוא/ייבוא',()=>{call('showTransfer()');call('exportProgress({textContent:""})');const v=els.impBox.value;if(!/^AMIRNET1:/.test(v))throw new Error('אין קוד');
   const data=JSON.parse(Buffer.from(v.slice(9),'base64').toString('utf8'));if(!('levels' in data)||!('drills' in data))throw new Error('הייצוא בלי levels/drills');});
+step('קישור העברה — הלוך-חזור',()=>{const before=store.amirnet_srs;const link=call('progressLink()');
+  if(!/#import=[A-Za-z0-9_-]+$/.test(link))throw new Error('קישור לא נקי: '+link.slice(0,60));
+  store.amirnet_srs='{"cards":{},"log":{}}';call('importProgress('+JSON.stringify(link)+')');
+  if(store.amirnet_srs!==before)throw new Error('הייבוא מהקישור לא החזיר את אותו מצב');
+  call('importProgress('+JSON.stringify(link.slice(0,link.length-40))+')');if(store.amirnet_srs!==before)throw new Error('קישור חתוך דרס מצב');});
 // מנוע המסיחים — מבנה 2/1/1 על מילים עם near
 step('buildOptions — near נכנס, 4 שונים',()=>{
   const r=call(`(function(){let ok=0,tot=0,bad=[];for(const k of Object.keys(S2)){const w=WORDS.find(x=>x.w===k);for(const it of S2[k]){tot++;
