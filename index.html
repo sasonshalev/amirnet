@@ -1461,6 +1461,7 @@ function sessAnswer(vi,oi){
     const d=new Date();d.setDate(d.getDate()+INTERVALS[c.b]);
     c.due=dayKey(d);
     if(sv)c.si=sv.si;   // 15.9 — המשפט שנראה עכשיו; בחזרה הבאה יגיע הבא
+    c.t=Date.now();     // 27.9 — זמן הסקירה האחרונה: המיזוג בין מכשירים מכריע לפיו
     s.cards[w.w]=c;srsSave(s);
     sess.i++;
     // פידבק קצר
@@ -1469,7 +1470,7 @@ function sessAnswer(vi,oi){
     sess.wrong++;s.log[today].w++;
     if(!item.isNew){
       const c=s.cards[w.w];if(c){c.b=1;c.laps=(c.laps||0)+1;if(sv)c.si=sv.si;
-        const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);}
+        const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);c.t=Date.now();}
     }
     // ⚠️ 4.8: השמירה הייתה רק בתוך ה-if — מי שטעה במילה חדשה בלבד ביום מסוים,
     // אותו יום לא נרשם ביומן בכלל והרצף נשבר. שומרים תמיד.
@@ -1493,6 +1494,7 @@ function sessUnknown(){
   c.b=0;c.laps=(c.laps||0)+1;c.unk=(c.unk||0)+1;
   const d=new Date();d.setDate(d.getDate()+1);c.due=dayKey(d);
   if(sv)c.si=sv.si;
+  c.t=Date.now();
   // מילה חדשה: הכרטיס נשמר עם b=0 (בלי seen) — אם יצא באמצע, מחר היא תחזור דרך הלמידה
   s.cards[w.w]=c;srsSave(s);
   const it=sess.queue.splice(sess.i,1)[0];it.needLearn=true;
@@ -2051,6 +2053,7 @@ function wsentAnswer(vi){
   if(!s.log[today])s.log[today]={n:0,r:0,c:0,w:0};
   const c=s.cards[item.word.w];
   if(c&&typeof item.q.si==='number'&&item.q.si>=0)c.si=item.q.si;   // 15.9 — המשפט הזה נראה; הבא בתור
+  if(c)c.t=Date.now();
   if(right){wsent.correct++;s.log[today].c++;}
   else{
     wsent.wrong++;s.log[today].w++;
@@ -2270,7 +2273,7 @@ function showTransfer(){
     <button class="btn" onclick="shareProgress(this)">📲 שלח התקדמות למכשיר אחר</button>
     <div id="shareMsg" class="sub" style="margin-top:8px"></div>
     <h2 style="margin-top:22px">קבלה (אל המכשיר הזה)</h2>
-    <p class="sub">אם שלחת קישור — פשוט פתח אותו כאן. אם העתקת קוד — לחץ "הדבק" או הדבק בתיבה. ⚠️ זה מחליף את ההתקדמות במכשיר הזה.</p>
+    <p class="sub">אם שלחת קישור — פשוט פתח אותו כאן. אם העתקת קוד — לחץ "הדבק" או הדבק בתיבה. הייבוא מוסיף — שום דבר שכבר יש כאן לא יימחק.</p>
     <textarea id="impBox" style="width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:10px;font-family:monospace;direction:ltr" placeholder="AMIRNET1:..."></textarea>
     <div id="impMsg" style="margin-top:10px;font-weight:600"></div>
     <div class="actions">
@@ -2340,25 +2343,92 @@ function decodeProgress(raw){
   if(!data||typeof data!=='object')throw new Error('bad');
   return data;
 }
-function applyProgress(data){
-  if(data.srs)localStorage.setItem('amirnet_srs',data.srs);
-  if(data.vocab)localStorage.setItem('amirnet_vocab',data.vocab);
-  if(data.diag)localStorage.setItem('amirnet_diag',data.diag);
-  if(data.levels)localStorage.setItem('amirnet_levels',data.levels);
-  if(data.drills)localStorage.setItem('amirnet_drills',data.drills);
-  // אימות אמיתי: קוראים בחזרה (ספארי פרטי "מצליח" לכתוב ולא שומר)
-  if(data.srs&&localStorage.getItem('amirnet_srs')!==data.srs)throw new Error('write-verify');
+/* ⚠️ 27.9 — הייבוא **החליף** את כל ההתקדמות. ששון העביר לאייפד בקישור במייל, תרגל בחמישי,
+   ובשישי נכנס שוב **מאותו קישור** ולחץ "ייבא" ⇒ חזר למצב של רגע השליחה, ותרגול חמישי נמחק
+   (אין ממה לשחזר). ⇒ ייבוא = **מיזוג**: קישור ישן שנפתח שוב לא יכול יותר למחוק כלום.
+   🔑 ההכרעה בין שני כרטיסים של אותה מילה: `t` (זמן סקירה אחרונה, מ-27.9) ⇒ אחרת `laps`
+   (עולה בלבד) ⇒ אחרת `due` מאוחר. נכונה כשצד אחד הוא גרסה ישנה של השני — המקרה של ששון.
+   ⚠️ אם אותה מילה תורגלה **בשני** המכשירים לפני 27.9 — זה ניחוש, לא ודאות. */
+function pickCard(a,b){
+  if(a.t||b.t)return (a.t||0)>=(b.t||0)?a:b;
+  if((a.laps||0)!==(b.laps||0))return (a.laps||0)>(b.laps||0)?a:b;
+  return String(a.due||'')>=String(b.due||'')?a:b;
 }
+function mergeSrs(loc,inc){
+  const out={cards:Object.assign({},loc.cards||{}),log:Object.assign({},loc.log||{})};
+  for(const w in (inc.cards||{}))out.cards[w]=out.cards[w]?pickCard(out.cards[w],inc.cards[w]):inc.cards[w];
+  // יום שקיים בשני הצדדים ⇒ מקסימום פר שדה, **לא סכום**: ייבוא חוזר של אותה תמונה היה מכפיל.
+  // ⚠️ תרגול באותו יום בשני מכשירים ייספר חסר — מקובל.
+  for(const d in (inc.log||{})){
+    const a=out.log[d],b=inc.log[d];
+    out.log[d]=!a?b:{n:Math.max(a.n||0,b.n||0),r:Math.max(a.r||0,b.r||0),c:Math.max(a.c||0,b.c||0),w:Math.max(a.w||0,b.w||0)};
+  }
+  return out;
+}
+function mergeDrills(loc,inc){
+  const seen=new Set(),all=[];
+  for(const x of loc.concat(inc)){const k=JSON.stringify(x);if(!seen.has(k)){seen.add(k);all.push(x);}}
+  all.sort((x,y)=>String(x.date||'')<String(y.date||'')?-1:String(x.date||'')>String(y.date||'')?1:0);
+  return all.slice(-40);
+}
+function mergeLevels(loc,inc){
+  const out=Object.assign({},loc);
+  for(const k in inc){
+    const a=out[k],b=inc[k];
+    if(!a||(!a.passed&&b.passed)||(!!a.passed===!!b.passed&&(b.score||0)>(a.score||0)))out[k]=b;
+  }
+  return out;
+}
+function parseOr(raw,dflt){try{const v=JSON.parse(raw);return v==null?dflt:v;}catch(e){return dflt;}}
+function mergeProgress(data){
+  if(data.srs){
+    const s=mergeSrs(srsLoad(),parseOr(data.srs,{cards:{},log:{}}));
+    srsSave(s);
+    // אימות אמיתי: srsSave כותב וקורא בחזרה (ספארי פרטי "מצליח" לכתוב ולא שומר)
+    if(window._srsWriteFailed)throw new Error('write-verify');
+  }
+  if(data.levels)levelsSave(mergeLevels(levelsLoad(),parseOr(data.levels,{})));
+  if(data.drills)localStorage.setItem('amirnet_drills',JSON.stringify(mergeDrills(drillsLoad(),parseOr(data.drills,[]))));
+  // vocab/diag לא מיוצאים מאז 15.9; קוד ישן שנושא אותם — רק אם אין כאן כלום
+  if(data.vocab&&!localStorage.getItem('amirnet_vocab'))localStorage.setItem('amirnet_vocab',data.vocab);
+  if(data.diag&&!localStorage.getItem('amirnet_diag'))localStorage.setItem('amirnet_diag',data.diag);
+}
+// טביעה של קישור — כדי לזהות שנפתח **שוב** (הקישור נשאר במייל ומזמין לחיצה חוזרת)
+function progressFp(data){
+  const str=(data.srs||'')+'|'+(data.levels||'')+'|'+(data.drills||'');
+  let h=5381;for(let i=0;i<str.length;i++)h=((h*33)^str.charCodeAt(i))>>>0;
+  return h.toString(16)+':'+str.length;
+}
+function importedLoad(){try{return JSON.parse(localStorage.getItem('amirnet_imported'))||{};}catch(e){return {};}}
+function importedMark(fp){try{const o=importedLoad();o[fp]=todayKey();localStorage.setItem('amirnet_imported',JSON.stringify(o));}catch(e){}}
 function importProgress(raw){
   if(raw===undefined)raw=document.getElementById('impBox').value;
   let data;
   try{data=decodeProgress(raw);}
   catch(e){impSay('✗ הקוד חתוך או פגום — חזור למכשיר הראשון ושלח שוב',false);return;}
   if(!data){impSay('✗ לא נמצא קוד או קישור העברה — ודא שהעתקת הכל, מההתחלה ועד הסוף',false);return;}
-  try{applyProgress(data);}
+  const before=progressSummary(localStorage.getItem('amirnet_srs'));
+  try{mergeProgress(data);}
   catch(e){impSay('✗ הדפדפן חסם שמירה. אם זו גלישה פרטית — פתח בחלון רגיל של ספארי',false);return;}
-  impSay('✓ ההתקדמות יובאה בהצלחה! חוזר למסך הבית…',true);
-  setTimeout(intro,1200);
+  importedMark(progressFp(data));
+  const after=progressSummary(localStorage.getItem('amirnet_srs'));
+  showImportDone(before,after);
+}
+// 27.9 — אחרי ייבוא: להגיד **מאיפה נכנסים מעכשיו**. שתי המלכודות (פתיחה חוזרת של הקישור,
+// והדפדפן הפנימי של Gmail שהאחסון שלו נפרד מספארי) נכנסות שתיהן דרך המייל.
+function showImportDone(before,after){
+  document.getElementById('topbar').style.visibility='hidden';
+  app.innerHTML=`<div class="card">
+    <h1>✓ ההתקדמות הועברה</h1>
+    <p>במכשיר הזה עכשיו: <b>${after.words}</b> מילים · <b>${after.days}</b> ימי תרגול
+      <span class="sub">(היו ${before.words} · ${before.days})</span></p>
+    <h2 style="margin-top:18px">⚠️ מעכשיו — נכנסים רק מספארי</h2>
+    <ol class="sub" style="line-height:1.9">
+      <li>אם הדף הזה נפתח <b>בתוך Gmail</b> — לחץ על כפתור השיתוף / ⋯ ← <b>"פתח בספארי"</b>.</li>
+      <li>בספארי: כפתור השיתוף ← <b>"הוסף סימנייה"</b>.</li>
+      <li>לתרגל תמיד מהסימנייה. <b>את הקישור במייל אפשר למחוק</b> — הוא כבר לא נחוץ.</li>
+    </ol>
+    <div class="actions"><button class="btn" onclick="intro()">→ למסך הבית</button></div></div>`;
 }
 function pasteAndImport(){
   if(!(navigator.clipboard&&navigator.clipboard.readText)){
@@ -2370,10 +2440,12 @@ function pasteAndImport(){
 }
 function progressSummary(srsRaw){
   let s;try{s=JSON.parse(srsRaw||'');}catch(e){s=null;}
-  if(!s||!s.cards)return {words:0,days:0};
-  return {words:Object.keys(s.cards).length,days:Object.keys(s.log||{}).length};
+  if(!s||!s.cards)return {words:0,days:0,last:''};
+  const days=Object.keys(s.log||{}).sort();
+  return {words:Object.keys(s.cards).length,days:days.length,last:days[days.length-1]||''};
 }
-// נפתח קישור העברה ⇒ מסך אישור (לא מייבאים בשקט — זה מחליף את מה שיש במכשיר)
+function heDay(k){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(k||'');return m?(+m[3])+'.'+(+m[2]):'—';}
+// נפתח קישור העברה ⇒ מסך אישור. 27.9: הייבוא ממזג (לא מוחק), וקישור שכבר יובא לא מוצע שוב.
 function checkImportLink(){
   if(location.hash.indexOf('#import=')!==0)return false;
   const link=location.href;
@@ -2388,10 +2460,23 @@ function checkImportLink(){
     return true;
   }
   const inc=progressSummary(data.srs),cur=progressSummary(localStorage.getItem('amirnet_srs'));
+  // 🔴 27.9 — הקישור נשאר במייל, ופתיחה חוזרת שלו היא בדיוק מה שמחק לששון את תרגול חמישי.
+  const done=importedLoad()[progressFp(data)];
+  if(done){
+    app.innerHTML=`<div class="card">
+      <h1>✓ הקישור הזה כבר הועבר (${heDay(done)})</h1>
+      <p><b>אין צורך לפתוח אותו שוב.</b> להמשך תרגול — היכנס מהסימנייה בספארי.</p>
+      <p class="sub">במכשיר הזה: ${cur.words} מילים · ${cur.days} ימי תרגול · תרגול אחרון ${heDay(cur.last)}</p>
+      <div class="actions"><button class="btn" onclick="intro()">→ למסך הבית</button></div></div>`;
+    return true;
+  }
+  const devNewer=cur.last&&cur.last>inc.last;
   app.innerHTML=`<div class="card">
     <h1>📲 קיבלת התקדמות ממכשיר אחר</h1>
-    <p>בקישור: <b>${inc.words}</b> מילים · <b>${inc.days}</b> ימי תרגול</p>
-    <p class="sub">במכשיר הזה כרגע: ${cur.words} מילים · ${cur.days} ימי תרגול${cur.words?' — <b>יוחלף</b>':''}</p>
+    <p>בקישור: <b>${inc.words}</b> מילים · <b>${inc.days}</b> ימי תרגול · תרגול אחרון ${heDay(inc.last)}</p>
+    <p class="sub">במכשיר הזה כרגע: ${cur.words} מילים · ${cur.days} ימי תרגול · תרגול אחרון ${heDay(cur.last)}</p>
+    <p class="sub">${devNewer?'✓ המכשיר הזה מעודכן יותר — הייבוא <b>ישמור</b> את מה שיש כאן ויוסיף רק מה שחסר.'
+      :'הייבוא <b>מוסיף</b> — שום דבר שכבר יש במכשיר הזה לא יימחק.'}</p>
     <div id="impMsg" style="margin-top:10px;font-weight:600"></div>
     <div class="actions">
       <button class="btn" id="impGo">📥 ייבא לכאן</button>

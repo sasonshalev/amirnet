@@ -37,6 +37,7 @@ run(content,'sentences.js');
 run(exams,'exams.js');
 run(main,'index.html');
 let fails=0;
+const sortDeep=v=>Array.isArray(v)?v.map(sortDeep):(v&&typeof v==='object')?Object.keys(v).sort().reduce((o,k)=>(o[k]=sortDeep(v[k]),o),{}):v;
 const step=(name,fn)=>{try{fn();const h=els.app.innerHTML;if(!h||h.length<50)throw new Error('המסך ריק');console.log('✅ '+name+' ('+h.length+' תווים)');}catch(e){fails++;console.log('🔴 '+name+': '+e.message);}};
 const g=n=>vm.runInContext(n,sandbox);
 const call=(code)=>vm.runInContext(code,sandbox);
@@ -108,11 +109,48 @@ step('רף הפטור 90% בכל המסכים',()=>{
 });
 step('ייצוא/ייבוא',()=>{call('showTransfer()');call('exportProgress({textContent:""})');const v=els.impBox.value;if(!/^AMIRNET1:/.test(v))throw new Error('אין קוד');
   const data=JSON.parse(Buffer.from(v.slice(9),'base64').toString('utf8'));if(!('levels' in data)||!('drills' in data))throw new Error('הייצוא בלי levels/drills');});
-step('קישור העברה — הלוך-חזור',()=>{const before=store.amirnet_srs;const link=call('progressLink()');
+step('קישור העברה — הלוך-חזור',()=>{const before=JSON.parse(store.amirnet_srs);const link=call('progressLink()');
   if(!/#import=[A-Za-z0-9_-]+$/.test(link))throw new Error('קישור לא נקי: '+link.slice(0,60));
-  store.amirnet_srs='{"cards":{},"log":{}}';call('importProgress('+JSON.stringify(link)+')');
-  if(store.amirnet_srs!==before)throw new Error('הייבוא מהקישור לא החזיר את אותו מצב');
-  call('importProgress('+JSON.stringify(link.slice(0,link.length-40))+')');if(store.amirnet_srs!==before)throw new Error('קישור חתוך דרס מצב');});
+  store.amirnet_srs='{"cards":{},"log":{}}';delete store.amirnet_imported;call('importProgress('+JSON.stringify(link)+')');
+  // 27.9 — מיזוג: השוואה סמנטית (סדר המפתחות יכול להשתנות), לא בייט-בייט
+  if(JSON.stringify(sortDeep(JSON.parse(store.amirnet_srs)))!==JSON.stringify(sortDeep(before)))throw new Error('הייבוא מהקישור לא החזיר את אותו מצב');
+  const snap=store.amirnet_srs;
+  call('importProgress('+JSON.stringify(link.slice(0,link.length-40))+')');if(store.amirnet_srs!==snap)throw new Error('קישור חתוך דרס מצב');});
+/* 🔴 27.9 — השחזור של ששון: טלפון שולח ⇒ אייפד מייבא ⇒ מתרגל ⇒ פותח שוב את אותו קישור מהמייל.
+   לפני התיקון: ההתקדמות חזרה לרגע השליחה ותרגול היום נמחק. */
+step('ייבוא חוזר של קישור ישן לא מוחק תרגול',()=>{
+  const base={cards:{alpha:{b:2,due:'2026-09-20',laps:0},beta:{b:1,due:'2026-09-20',laps:1}},log:{'2026-09-24':{n:2,r:0,c:2,w:1}}};
+  store.amirnet_srs=JSON.stringify(base);store.amirnet_drills='[{"date":"2026-09-24","kind":"scp","correct":5,"total":8,"pct":63}]';
+  store.amirnet_levels='{"1":{"passed":true,"score":95,"date":"2026-09-01"}}';delete store.amirnet_imported;
+  const link=call('progressLink()');
+  // "באייפד": מתרגל ביום חמישי — alpha התקדמה, beta נכשלה שוב, gamma חדשה, יומן חדש, תרגול משפטים חדש
+  const now={cards:{alpha:{b:3,due:'2026-09-29',laps:0,t:2},beta:{b:1,due:'2026-09-26',laps:2,t:3},gamma:{b:1,due:'2026-09-26',laps:0,t:4}},
+    log:{'2026-09-24':{n:2,r:0,c:2,w:1},'2026-09-25':{n:1,r:1,c:3,w:1}}};
+  store.amirnet_srs=JSON.stringify(now);
+  store.amirnet_drills='[{"date":"2026-09-24","kind":"scp","correct":5,"total":8,"pct":63},{"date":"2026-09-25","kind":"scp","correct":7,"total":8,"pct":88}]';
+  call('importProgress('+JSON.stringify(link)+')');
+  const got=JSON.parse(store.amirnet_srs);
+  if(JSON.stringify(sortDeep(got))!==JSON.stringify(sortDeep(now)))throw new Error('תרגול היום אבד: '+JSON.stringify(got).slice(0,200));
+  if(JSON.parse(store.amirnet_drills).length!==2)throw new Error('תרגול משפטים אבד/הוכפל: '+store.amirnet_drills);
+  if(!JSON.parse(store.amirnet_levels)['1'].passed)throw new Error('רמה שעברה אבדה');});
+step('מיזוג: מילה רק בקישור נוספת · יום משותף = מקסימום, לא סכום',()=>{
+  store.amirnet_srs=JSON.stringify({cards:{a:{b:2,due:'2026-09-30',laps:0}},log:{'2026-09-25':{n:1,r:2,c:3,w:0}}});
+  delete store.amirnet_imported;const link=call('progressLink()');
+  store.amirnet_srs=JSON.stringify({cards:{z:{b:1,due:'2026-09-28',laps:0}},log:{'2026-09-25':{n:2,r:1,c:3,w:1}}});
+  call('importProgress('+JSON.stringify(link)+')');
+  const g=JSON.parse(store.amirnet_srs);
+  if(!g.cards.a||!g.cards.z)throw new Error('איחוד כרטיסים נכשל: '+Object.keys(g.cards));
+  const d=g.log['2026-09-25'];if(d.n!==2||d.r!==2||d.c!==3||d.w!==1)throw new Error('יום משותף לא מקסימום: '+JSON.stringify(d));});
+step('קישור שכבר יובא — בלי כפתור ייבוא',()=>{
+  store.amirnet_srs=JSON.stringify({cards:{a:{b:2,due:'2026-09-30',laps:0}},log:{'2026-09-25':{n:1,r:0,c:1,w:0}}});
+  delete store.amirnet_imported;const link=call('progressLink()');const hash=link.slice(link.indexOf('#'));
+  call('location.hash='+JSON.stringify(hash)+';location.href="https://x/amirnet/"+'+JSON.stringify(hash));call('checkImportLink()');
+  if(!/impGo/.test(els.app.innerHTML))throw new Error('פתיחה ראשונה — אין כפתור ייבוא');
+  call('importProgress('+JSON.stringify(link)+')');
+  call('location.hash='+JSON.stringify(hash)+';location.href="https://x/amirnet/"+'+JSON.stringify(hash));call('checkImportLink()');
+  if(/impGo/.test(els.app.innerHTML))throw new Error('פתיחה חוזרת עדיין מציעה ייבוא');
+  if(!/כבר הועבר/.test(els.app.innerHTML))throw new Error('אין הודעת "כבר הועבר"');
+  call('location.hash="";location.href="https://x/amirnet/"');});
 // מנוע המסיחים — מבנה 2/1/1 על מילים עם near
 step('buildOptions — near נכנס, 4 שונים',()=>{
   const r=call(`(function(){let ok=0,tot=0,bad=[];for(const k of Object.keys(S2)){const w=WORDS.find(x=>x.w===k);for(const it of S2[k]){tot++;
